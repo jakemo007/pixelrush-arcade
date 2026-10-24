@@ -1,0 +1,39 @@
+.nav {
+  padding-top: var(--space-5);
+  font-size: var(--text-sm);
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-subtle);
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.item + .item::before {
+  content: '/';
+  color: var(--color-text-subtle);
+}
+
+.item a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.item a:hover {
+  color: var(--color-cyan);
+  text-decoration: underline;
+}
+
+.item [aria-current] {
+  color: var(--color-text);
+}

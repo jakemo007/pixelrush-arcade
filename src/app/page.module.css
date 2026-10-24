@@ -1,0 +1,196 @@
+.hero {
+  display: grid;
+  gap: var(--space-6);
+  align-items: center;
+  padding-block: clamp(2.5rem, 1.5rem + 4vw, 5rem) var(--space-5);
+}
+
+@media (min-width: 900px) {
+  .hero {
+    grid-template-columns: 1.05fr 1fr;
+    gap: var(--space-7);
+  }
+}
+
+.heroTitle {
+  max-width: 16ch;
+}
+
+.highlight {
+  background: linear-gradient(90deg, var(--color-cyan), var(--color-violet));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.heroCopy :global(.btn-row) {
+  margin-top: var(--space-5);
+}
+
+.heroPoints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.heroPoints li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.heroPoints li::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--color-cyan);
+  box-shadow: 0 0 10px var(--color-cyan);
+}
+
+.spotlight {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border: 1px solid rgba(56, 232, 255, 0.35);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card), var(--glow-cyan);
+  color: var(--color-text);
+  text-decoration: none;
+  transition: transform var(--duration) var(--ease);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .spotlight:hover {
+    transform: translateY(-3px);
+  }
+}
+
+.spotlightArt {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.spotlightCaption {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  background: linear-gradient(180deg, transparent, rgba(6, 8, 26, 0.92) 55%);
+}
+
+.spotlightBadge {
+  align-self: flex-start;
+  padding: 0.15em 0.7em;
+  border-radius: var(--radius-pill);
+  background: var(--color-yellow);
+  color: #1a1300;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spotlightName {
+  font-size: 1.6rem;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+}
+
+.spotlightTag {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+.dailySection {
+  padding-top: var(--space-6);
+}
+
+.features {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feature {
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.feature p {
+  margin: 0;
+}
+
+.featureIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: var(--space-3);
+  border-radius: var(--radius-md);
+  background: rgba(56, 232, 255, 0.1);
+  color: var(--color-cyan);
+}
+
+.featureTitle {
+  font-size: 1.1rem;
+  margin-bottom: var(--space-2);
+}
+
+.guides {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide {
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--color-surface-2), var(--color-surface));
+}
+
+.guide p:last-child {
+  margin: 0;
+}
+
+.guideGame {
+  margin: 0 0 var(--space-2);
+  color: var(--color-violet);
+  font-size: 0.8125rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.guideTitle {
+  font-size: 1.2rem;
+}
+
+.guideTitle a {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.guideTitle a:hover {
+  color: var(--color-cyan);
+  text-decoration: underline;
+}
