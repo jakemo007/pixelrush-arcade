@@ -57,7 +57,7 @@ Runtime dependencies are only `next`, `react` and `react-dom`.
 ## Prerequisites
 
 - **Node.js 20.9 or newer** (Node 22 LTS recommended). Check with `node --version`.
-- **npm 10 or newer** (bundled with Node). If `npm install` fails with `Cannot read properties of null (reading 'edgesOut')`, your npm has a known bug; upgrade with `npm install -g npm@10` or run `npx npm@10 install`.
+- **npm 10 or newer** (bundled with Node). `npm ci` works on all npm 10 releases (verified with 10.5.1). Some older 10.x releases fail when *adding* packages (`npm install <pkg>`) with `Cannot read properties of null (reading 'edgesOut')`; upgrade with `npm install -g npm@10` or use `npx npm@10 install <pkg>`.
 - **Git**.
 - Optional, for `npm run test:smoke`: **Google Chrome or Microsoft Edge** installed locally. No browser download is needed.
 
@@ -202,7 +202,7 @@ Full instructions: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). In short:
 
 | Problem | Fix |
 | --- | --- |
-| `npm install` fails with `reading 'edgesOut'` | npm bug in some 10.x releases: `npm install -g npm@10`, or `npx npm@10 install` |
+| `npm install <pkg>` fails with `reading 'edgesOut'` | npm bug in some older 10.x releases: `npm install -g npm@10`, or `npx npm@10 install <pkg>`. Plain `npm ci` is unaffected |
 | `require() of ES Module ... std-env` when running tests | Use Node 20.19+/22.12+ or keep `vitest.config.mts` (the `.mts` extension avoids this on older Node 22) |
 | Build warns `NEXT_PUBLIC_SITE_URL is not set` | Expected locally. Set it in production so canonical URLs use your domain |
 | `npm run preview` says `out/` is missing | Run `npm run build` first |
