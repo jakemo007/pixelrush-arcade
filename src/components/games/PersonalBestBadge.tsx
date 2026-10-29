@@ -1,16 +1,23 @@
 'use client';
 
-import type { GameId } from '@/config/games';
-import { loadPersonalBest } from '@/lib/storage/high-scores';
+import type { BestConfig, GameId } from '@/config/games';
+import { formatResult } from '@/lib/format';
+import { loadBest } from '@/lib/storage/high-scores';
 import { useLocalValue } from '@/lib/storage/use-local-value';
 
-/** Shows "Your best: N" when this browser has a stored personal best. */
-export function PersonalBestBadge({ gameId }: { gameId: GameId }) {
-  const best = useLocalValue(() => loadPersonalBest(gameId), 0);
-  if (best <= 0) return null;
+interface Props {
+  gameId: GameId;
+  best: BestConfig;
+  variant?: string;
+  variantLabel?: string;
+}
+
+export function PersonalBestBadge({ gameId, best, variant, variantLabel }: Props) {
+  const value = useLocalValue(() => loadBest(gameId, variant) ?? 0, 0);
+  if (value <= 0) return null;
   return (
     <span className="pill pill-accent" title="Stored only in this browser">
-      Your best: {best.toLocaleString('en-US')}
+      Your best{variantLabel ? ` (${variantLabel})` : ''}: {formatResult(value, best)}
     </span>
   );
 }

@@ -6,12 +6,17 @@ import {
   loadDailyProgress,
   updateDailyEntry,
 } from '@/lib/storage/daily-progress';
+import { createGameStorage, gameDataKey } from '@/lib/storage/game-data';
 import {
+  isBetterResult,
   isNewPersonalBest,
   isValidScore,
+  isValidVariant,
+  loadBest,
   loadPersonalBest,
   MAX_SCORE,
   personalBestKey,
+  recordBest,
   recordScore,
 } from '@/lib/storage/high-scores';
 import { getBrowserStorage, readJson, STORAGE_PREFIX, writeJson } from '@/lib/storage/safe-storage';
@@ -45,7 +50,6 @@ describe('personal bests', () => {
     expect(recordScore('neon-dash', 300, store)).toEqual({ best: 500, isNewBest: false, persisted: true });
     expect(recordScore('neon-dash', 800, store).isNewBest).toBe(true);
     expect(loadPersonalBest('neon-dash', store)).toBe(800);
-    // Games are stored separately under versioned keys.
     expect(loadPersonalBest('brick-breaker', store)).toBe(0);
     expect(personalBestKey('neon-dash').startsWith(STORAGE_PREFIX)).toBe(true);
   });
@@ -57,7 +61,6 @@ describe('personal bests', () => {
       store.setItem(key, raw);
       expect(loadPersonalBest('space-survival', store)).toBe(0);
     }
-    // A corrupt value is replaced by the next real score.
     expect(recordScore('space-survival', 50, store).isNewBest).toBe(true);
     expect(loadPersonalBest('space-survival', store)).toBe(50);
   });
@@ -76,13 +79,101 @@ describe('personal bests', () => {
   });
 });
 
+describe('generalised personal bests', () => {
+  const now = new Date('2026-10-24T12:00:00Z');
+
+  it('compares results in either direction and never counts zero', () => {
+    expect(isBetterResult(5, null, 'higher')).toBe(true);
+    expect(isBetterResult(5, null, 'lower')).toBe(true);
+    expect(isBetterResult(0, null, 'lower')).toBe(false);
+    expect(isBetterResult(0, null, 'higher')).toBe(false);
+    expect(isBetterResult(4, 5, 'lower')).toBe(true);
+    expect(isBetterResult(5, 5, 'lower')).toBe(false);
+    expect(isBetterResult(6, 5, 'lower')).toBe(false);
+    expect(isBetterResult(6, 5, 'higher')).toBe(true);
+    expect(isBetterResult(1.5, null, 'lower')).toBe(false);
+  });
+
+  it('keeps the lowest time for lower-is-better games', () => {
+    const store = new MemoryStore();
+    expect(loadBest('car-racing', undefined, store)).toBeNull();
+    expect(recordBest('car-racing', 95_000, { direction: 'lower', store, now })).toEqual({ best: 95_000, isNewBest: true, persisted: true });
+    expect(recordBest('car-racing', 99_000, { direction: 'lower', store, now })).toEqual({ best: 95_000, isNewBest: false, persisted: true });
+    expect(recordBest('car-racing', 90_500, { direction: 'lower', store, now }).isNewBest).toBe(true);
+    expect(loadBest('car-racing', undefined, store)).toBe(90_500);
+  });
+
+  it('stores one best per variant, separate from the unvarianted key', () => {
+    const store = new MemoryStore();
+    recordBest('sudoku', 300_000, { direction: 'lower', variant: 'easy', store, now });
+    recordBest('sudoku', 900_000, { direction: 'lower', variant: 'hard', store, now });
+    expect(loadBest('sudoku', 'easy', store)).toBe(300_000);
+    expect(loadBest('sudoku', 'hard', store)).toBe(900_000);
+    expect(loadBest('sudoku', 'medium', store)).toBeNull();
+    expect(loadBest('sudoku', undefined, store)).toBeNull();
+    expect(personalBestKey('sudoku', 'easy')).toBe(`${STORAGE_PREFIX}best:sudoku:easy`);
+  });
+
+  it('rejects malformed variants instead of writing odd keys', () => {
+    expect(isValidVariant('4x4')).toBe(true);
+    expect(isValidVariant('2-suits')).toBe(true);
+    for (const bad of ['', 'Hard', 'a b', '../x', '-x', 'x'.repeat(40), 3]) expect(isValidVariant(bad)).toBe(false);
+    const store = new MemoryStore();
+    expect(loadBest('sudoku', 'Bad Key', store)).toBeNull();
+    recordBest('sudoku', 1000, { direction: 'lower', variant: 'Bad Key', store, now });
+    expect([...store.data.keys()]).toEqual([personalBestKey('sudoku')]);
+  });
+
+  it('treats a stored zero as no record', () => {
+    const store = new MemoryStore();
+    store.setItem(personalBestKey('mini-golf'), JSON.stringify({ score: 0, achievedAt: 'x' }));
+    expect(loadBest('mini-golf', undefined, store)).toBeNull();
+    expect(recordBest('mini-golf', 30, { direction: 'lower', store, now }).isNewBest).toBe(true);
+  });
+
+  it('never throws for lower-is-better results when storage fails', () => {
+    expect(recordBest('minesweeper', 1000, { direction: 'lower', variant: 'expert', store: new ThrowingStore(), now })).toEqual({
+      best: 1000,
+      isNewBest: true,
+      persisted: false,
+    });
+  });
+});
+
+describe('per-game data storage', () => {
+  it('namespaces keys by game and validates reads', () => {
+    const store = new MemoryStore();
+    const chess = createGameStorage('chess', store);
+    const checkers = createGameStorage('checkers', store);
+    const isStats = (v: unknown): v is { wins: number } =>
+      typeof v === 'object' && v !== null && typeof (v as { wins?: unknown }).wins === 'number';
+    expect(chess.write('stats', { wins: 3 })).toBe(true);
+    expect(chess.read('stats', isStats)).toEqual({ wins: 3 });
+    expect(checkers.read('stats', isStats)).toBeNull();
+    expect(gameDataKey('chess', 'stats')).toBe(`${STORAGE_PREFIX}game:chess:stats`);
+    store.setItem(gameDataKey('chess', 'stats'), '{"wins":"many"}');
+    expect(chess.read('stats', isStats)).toBeNull();
+    chess.remove('stats');
+    expect(store.getItem(gameDataKey('chess', 'stats'))).toBeNull();
+  });
+
+  it('rejects invalid names and survives broken storage', () => {
+    expect(() => gameDataKey('chess', 'Bad Name')).toThrow();
+    const broken = createGameStorage('chess', new ThrowingStore());
+    expect(broken.write('stats', { wins: 1 })).toBe(false);
+    expect(broken.read('stats', (v): v is unknown => true)).toBeNull();
+    expect(() => broken.remove('stats')).not.toThrow();
+    const none = createGameStorage('chess', null);
+    expect(none.write('stats', 1)).toBe(false);
+  });
+});
+
 describe('daily progress', () => {
   it('records the best challenge score and completion per date', () => {
     const store = new MemoryStore();
     updateDailyEntry('2026-10-24', { score: 300, completed: false }, store);
     updateDailyEntry('2026-10-24', { score: 200, completed: true }, store);
     expect(getDailyEntry('2026-10-24', store)).toEqual({ best: 300, completed: true });
-    // Completion is never undone by a later, worse run.
     updateDailyEntry('2026-10-24', { score: 100, completed: false }, store);
     expect(getDailyEntry('2026-10-24', store)?.completed).toBe(true);
     expect(getDailyEntry('2026-10-25', store)).toBeNull();

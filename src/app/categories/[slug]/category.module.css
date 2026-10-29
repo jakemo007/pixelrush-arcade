@@ -1,0 +1,20 @@
+.top {
+  padding-top: var(--space-6);
+}
+
+.header {
+  max-width: 72ch;
+  margin-bottom: var(--space-6);
+}
+
+.intro {
+  color: var(--color-text-muted);
+}
+
+.count {
+  display: inline-flex;
+  margin: 0;
+  color: var(--color-text-subtle);
+  font-size: var(--text-sm);
+  font-weight: 650;
+}

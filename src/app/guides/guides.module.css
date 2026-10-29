@@ -36,7 +36,6 @@
   text-decoration: underline;
 }
 
-/* Article page */
 .articleHeader {
   padding-block: var(--space-6) var(--space-5);
   max-width: 72ch;

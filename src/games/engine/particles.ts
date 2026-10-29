@@ -1,9 +1,3 @@
-/**
- * Fixed-capacity particle pool for purely cosmetic effects (sparks, trails).
- * Dead particles are reused, so the pool never grows past its capacity no
- * matter how long a run lasts.
- */
-
 import type { Rng } from '@/lib/utils/random';
 
 export interface Particle {
@@ -28,7 +22,6 @@ export interface BurstOptions {
   size?: number;
   life?: number;
   gravity?: number;
-  /** Direction in radians and spread around it; defaults to a full circle. */
   angle?: number;
   spread?: number;
 }
@@ -56,7 +49,6 @@ export class ParticlePool {
   }
 
   private next(): Particle {
-    // Prefer a dead slot; otherwise recycle the oldest one (ring buffer).
     for (let i = 0; i < this.capacity; i++) {
       const p = this.items[(this.cursor + i) % this.capacity]!;
       if (!p.alive) {
@@ -103,7 +95,6 @@ export class ParticlePool {
     }
   }
 
-  /** Shifts all live particles (used when a scrolling world moves under them). */
   offset(dx: number, dy: number): void {
     for (const p of this.items) {
       if (!p.alive) continue;

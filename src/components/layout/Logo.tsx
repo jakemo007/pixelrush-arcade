@@ -1,6 +1,5 @@
 import { siteConfig } from '@/config/site';
 
-/** Brand mark: a play arrow with speed lines. Matches src/app/icon.svg. */
 export function LogoMark({ size = 32 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" focusable="false">

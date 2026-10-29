@@ -1,10 +1,3 @@
-/*
- * The stage keeps the game's aspect ratio and is sized by CSS alone, so the
- * page reserves the right space before any JavaScript runs (no layout shift).
- * Width = the smaller of the container width and the width at which the HUD
- * plus the stage fit in the viewport height. When a run starts, GameShell
- * scrolls the widget into view, so the whole play area is visible.
- */
 .shell {
   --accent: var(--color-cyan);
   --ratio: calc(var(--game-w) / var(--game-h));
@@ -21,7 +14,6 @@
   }
 }
 
-/* The daily-challenge banner sits above the HUD, so leave room for it. */
 .shell[data-challenge='true'] {
   --chrome-h: 210px;
 }
@@ -34,6 +26,12 @@
 }
 .magenta {
   --accent: var(--color-magenta);
+}
+.amber {
+  --accent: var(--color-yellow);
+}
+.green {
+  --accent: var(--color-success);
 }
 
 .challengeBar {
@@ -163,8 +161,6 @@
   height: 100%;
 }
 
-/* Only capture touch gestures while actually playing, so the page can still
-   be scrolled when a menu is showing. */
 .shell[data-status='playing'] .canvas {
   touch-action: none;
   cursor: none;
@@ -186,7 +182,6 @@
 }
 
 .overlayResult .bigButton {
-  /* Fades in so an accidental tap right at game over is unlikely to hit it. */
   animation: fade-in 420ms var(--ease) both;
 }
 
@@ -293,7 +288,6 @@
   }
 }
 
-/* Small or short screens: compact overlays. */
 @media (max-width: 560px), (max-height: 520px) {
   .overlay {
     gap: var(--space-2);
@@ -330,9 +324,6 @@
   }
 }
 
-/* Narrow screens with a landscape game (Neon Dash on a phone held upright):
-   the stage is short, so menus show only the essentials. The controls are
-   still listed in the hint below the game. */
 @media (max-width: 600px) {
   .shell[data-layout='landscape'] .controlsList,
   .shell[data-layout='landscape'] .overlayHint,

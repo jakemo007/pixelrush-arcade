@@ -1,12 +1,3 @@
-/**
- * Tiny synthesized sound effects using the Web Audio API.
- *
- * No audio files are shipped: every sound is generated from oscillators and
- * a noise buffer, so there are no third-party audio licenses to track.
- * The AudioContext is only created inside a user gesture (unlock()), so
- * nothing ever plays before the player has interacted with the game.
- */
-
 import type { SoundCue } from './types';
 
 interface ToneSpec {
@@ -62,10 +53,28 @@ const CUES: Record<SoundCue, readonly ToneSpec[]> = {
     { wave: 'square', from: 784, to: 784, duration: 0.12, volume: 0.06, delay: 0.24 },
     { wave: 'square', from: 1046, to: 1046, duration: 0.35, volume: 0.06, delay: 0.36 },
   ],
+  select: [{ wave: 'triangle', from: 740, to: 740, duration: 0.04, volume: 0.05 }],
+  place: [{ wave: 'triangle', from: 320, to: 240, duration: 0.06, volume: 0.07 }],
+  invalid: [{ wave: 'square', from: 180, to: 150, duration: 0.12, volume: 0.04 }],
+  match: [
+    { wave: 'sine', from: 660, to: 660, duration: 0.07, volume: 0.07 },
+    { wave: 'sine', from: 990, to: 990, duration: 0.1, volume: 0.07, delay: 0.06 },
+  ],
+  flip: [{ noise: true, from: 0, to: 0, duration: 0.05, volume: 0.05 }],
+  pop: [{ wave: 'sine', from: 900, to: 300, duration: 0.07, volume: 0.07 }],
+  swish: [
+    { noise: true, from: 0, to: 0, duration: 0.18, volume: 0.07 },
+    { wave: 'sine', from: 880, to: 1320, duration: 0.15, volume: 0.05, delay: 0.05 },
+  ],
+  tick: [{ wave: 'square', from: 1200, to: 1200, duration: 0.025, volume: 0.03 }],
+  crash: [
+    { noise: true, from: 0, to: 0, duration: 0.22, volume: 0.12 },
+    { wave: 'sawtooth', from: 160, to: 60, duration: 0.2, volume: 0.06 },
+  ],
+  putt: [{ wave: 'triangle', from: 520, to: 380, duration: 0.05, volume: 0.08 }],
 };
 
-/** Minimum seconds between two plays of the same cue (prevents harsh stacking). */
-const MIN_GAP: Partial<Record<SoundCue, number>> = { shoot: 0.07, brick: 0.03, bounce: 0.03, explode: 0.05 };
+const MIN_GAP: Partial<Record<SoundCue, number>> = { shoot: 0.07, brick: 0.03, bounce: 0.03, explode: 0.05, pop: 0.03, tick: 0.05 };
 const MASTER_VOLUME = 0.8;
 
 type AudioContextCtor = typeof AudioContext;
@@ -78,7 +87,6 @@ export class SoundBoard {
 
   constructor(private muted: boolean) {}
 
-  /** Call from a user gesture (click/tap/key). Safe to call repeatedly. */
   unlock(): void {
     if (typeof window === 'undefined') return;
     if (!this.ctx) {

@@ -22,7 +22,7 @@ describe('game status transitions', () => {
       ['ready', 'restart'],
       ['ready', 'end'],
       ['playing', 'start'],
-      ['playing', 'restart'], // a stray key can never wipe a run in progress
+      ['playing', 'restart'],
       ['paused', 'start'],
       ['over', 'pause'],
       ['over', 'resume'],
@@ -126,11 +126,11 @@ describe('fixed-step loop', () => {
       now: () => 0,
     });
     loop.start();
-    frames.fire(50); // 50 ms -> 5 steps
+    frames.fire(50);
     expect(steps).toBe(5);
     expect(renders).toBe(1);
     frames.fire(55);
-    expect(steps).toBe(5); // 5 ms accumulated, not enough for a step
+    expect(steps).toBe(5);
     frames.fire(60);
     expect(steps).toBe(6);
   });
@@ -148,7 +148,7 @@ describe('fixed-step loop', () => {
       now: () => 0,
     });
     loop.start();
-    frames.fire(10_000); // a 10 s hitch
+    frames.fire(10_000);
     expect(steps).toBe(10);
   });
 

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { DailyChallengeCard, UpcomingChallenges } from '@/components/daily/DailyChallengeCard';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
-import { GAMES, gamePath } from '@/config/games';
+import { CHALLENGE_GAME_IDS, gamePath, getGame } from '@/config/games';
 import { GUIDES } from '@/content/guides';
 import { MODIFIERS } from '@/games/modifiers';
 import { pageMetadata } from '@/lib/seo/metadata';
@@ -12,6 +12,8 @@ export const metadata = pageMetadata({
     'Play the PixelRush Arcade Daily Challenge: one game, one goal and the same seeded course for everyone, refreshed every day at 00:00 UTC.',
   path: '/daily-challenge/',
 });
+
+const CHALLENGE_GAMES = CHALLENGE_GAME_IDS.map((id) => ({ id, name: getGame(id).name }));
 
 export default function DailyChallengePage() {
   return (
@@ -43,7 +45,7 @@ export default function DailyChallengePage() {
         <h2 id="how-it-works">How the Daily Challenge works</h2>
         <ul>
           <li>
-            <strong>One game per day.</strong> The featured game rotates through {GAMES.map((g) => g.name).join(', ')} in a fixed
+            <strong>One game per day.</strong> The featured game rotates through {CHALLENGE_GAMES.map((g) => g.name).join(', ')} in a fixed
             order.
           </li>
           <li>
@@ -78,7 +80,7 @@ export default function DailyChallengePage() {
         </p>
 
         <h2 id="modifiers">All modifiers</h2>
-        {GAMES.map((g) => (
+        {CHALLENGE_GAMES.map((g) => (
           <div key={g.id}>
             <h3>
               <Link href={gamePath(g.id)}>{g.name}</Link>

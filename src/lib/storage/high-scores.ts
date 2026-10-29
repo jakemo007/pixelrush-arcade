@@ -1,8 +1,3 @@
-/**
- * Personal-best scores, stored only in the player's own browser.
- * Nothing here is sent anywhere or verified by a server.
- */
-
 import { isGameId, type GameId } from '@/config/games';
 import {
   getBrowserStorage,
@@ -13,43 +8,76 @@ import {
   type KeyValueStore,
 } from './safe-storage';
 
-/** Scores above this are treated as corrupt/hand-edited rather than real. */
 export const MAX_SCORE = 10_000_000;
+
+export type BestDirection = 'higher' | 'lower';
 
 export interface PersonalBestRecord {
   score: number;
-  /** ISO timestamp of when the record was set. */
   achievedAt: string;
 }
 
+const VARIANT_PATTERN = /^[a-z0-9][a-z0-9-]{0,31}$/;
+
 export function isValidScore(value: unknown): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= MAX_SCORE;
+}
+
+export function isValidVariant(value: unknown): value is string {
+  return typeof value === 'string' && VARIANT_PATTERN.test(value);
 }
 
 export function isPersonalBestRecord(value: unknown): value is PersonalBestRecord {
   return isPlainObject(value) && isValidScore(value.score) && typeof value.achievedAt === 'string';
 }
 
-/** A run only counts as a new personal best if it strictly beats the old one. */
 export function isNewPersonalBest(score: number, previousBest: number): boolean {
   return isValidScore(score) && score > 0 && score > previousBest;
 }
 
-export function personalBestKey(gameId: GameId): string {
-  return storageKey(`best:${gameId}`);
+export function isBetterResult(value: number, previous: number | null, direction: BestDirection): boolean {
+  if (!isValidScore(value) || value <= 0) return false;
+  if (previous === null) return true;
+  return direction === 'higher' ? value > previous : value < previous;
+}
+
+export function personalBestKey(gameId: GameId, variant?: string): string {
+  return storageKey(variant ? `best:${gameId}:${variant}` : `best:${gameId}`);
+}
+
+export function loadBest(gameId: GameId, variant?: string, store: KeyValueStore | null = getBrowserStorage()): number | null {
+  if (!isGameId(gameId) || (variant !== undefined && !isValidVariant(variant))) return null;
+  const record = readJson(store, personalBestKey(gameId, variant), isPersonalBestRecord);
+  return record && record.score > 0 ? record.score : null;
 }
 
 export function loadPersonalBest(gameId: GameId, store: KeyValueStore | null = getBrowserStorage()): number {
-  if (!isGameId(gameId)) return 0;
-  return readJson(store, personalBestKey(gameId), isPersonalBestRecord)?.score ?? 0;
+  return loadBest(gameId, undefined, store) ?? 0;
 }
 
 export interface SaveResult {
-  /** The best score after this run (old or new). */
   best: number;
   isNewBest: boolean;
-  /** False when the browser refused the write (private mode, full storage...). */
   persisted: boolean;
+}
+
+export interface RecordBestOptions {
+  direction: BestDirection;
+  variant?: string;
+  store?: KeyValueStore | null;
+  now?: Date;
+}
+
+export function recordBest(gameId: GameId, value: number, options: RecordBestOptions): SaveResult {
+  const store = options.store === undefined ? getBrowserStorage() : options.store;
+  const variant = options.variant !== undefined && isValidVariant(options.variant) ? options.variant : undefined;
+  const previous = loadBest(gameId, variant, store);
+  if (!isBetterResult(value, previous, options.direction)) {
+    return { best: previous ?? 0, isNewBest: false, persisted: store !== null };
+  }
+  const record: PersonalBestRecord = { score: value, achievedAt: (options.now ?? new Date()).toISOString() };
+  const persisted = writeJson(store, personalBestKey(gameId, variant), record);
+  return { best: value, isNewBest: true, persisted };
 }
 
 export function recordScore(
@@ -58,11 +86,5 @@ export function recordScore(
   store: KeyValueStore | null = getBrowserStorage(),
   now: Date = new Date(),
 ): SaveResult {
-  const previous = loadPersonalBest(gameId, store);
-  if (!isNewPersonalBest(score, previous)) {
-    return { best: previous, isNewBest: false, persisted: store !== null };
-  }
-  const record: PersonalBestRecord = { score, achievedAt: now.toISOString() };
-  const persisted = writeJson(store, personalBestKey(gameId), record);
-  return { best: score, isNewBest: true, persisted };
+  return recordBest(gameId, score, { direction: 'higher', store, now });
 }

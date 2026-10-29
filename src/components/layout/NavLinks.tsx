@@ -4,34 +4,35 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './SiteHeader.module.css';
 
-const LINKS = [
+export const NAV_LINKS = [
   { href: '/games/', label: 'Games' },
   { href: '/daily-challenge/', label: 'Daily Challenge' },
   { href: '/guides/', label: 'Guides' },
   { href: '/about/', label: 'About' },
-];
+] as const;
 
-/** Primary navigation; marks the current section with aria-current. */
-export function NavLinks() {
+export function useCurrentPath(): string {
   const pathname = usePathname() ?? '/';
-  const normalized = pathname.endsWith('/') ? pathname : `${pathname}/`;
+  return pathname.endsWith('/') ? pathname : `${pathname}/`;
+}
+
+export function currentFor(path: string, href: string): 'page' | 'true' | undefined {
+  if (path === href) return 'page';
+  if (href !== '/' && path.startsWith(href)) return 'true';
+  return undefined;
+}
+
+export function NavLinks() {
+  const path = useCurrentPath();
   return (
     <ul className={styles.navList}>
-      {LINKS.map((link) => {
-        const exact = normalized === link.href;
-        const inSection = normalized.startsWith(link.href);
-        return (
-          <li key={link.href}>
-            <Link
-              href={link.href}
-              className={styles.navLink}
-              aria-current={exact ? 'page' : inSection ? 'true' : undefined}
-            >
-              {link.label}
-            </Link>
-          </li>
-        );
-      })}
+      {NAV_LINKS.map((link) => (
+        <li key={link.href}>
+          <Link href={link.href} className={styles.navLink} aria-current={currentFor(path, link.href)}>
+            {link.label}
+          </Link>
+        </li>
+      ))}
     </ul>
   );
 }

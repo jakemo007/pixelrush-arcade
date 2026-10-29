@@ -6,7 +6,7 @@ import { gamePath, getGame } from '@/config/games';
 import { formatDateKey, getChallengeForDateKey, msUntilNextChallenge } from '@/lib/daily/challenge';
 import { getDailyEntry } from '@/lib/storage/daily-progress';
 import { useLocalValue } from '@/lib/storage/use-local-value';
-import { GameArt } from '../games/GameArt';
+import { ClassicGameArt } from '../games/ClassicGameArt';
 import { useMinuteClock, useUtcDateKey } from './use-utc-clock';
 import styles from './DailyChallengeCard.module.css';
 
@@ -19,7 +19,6 @@ function formatCountdown(ms: number): string {
 }
 
 interface Props {
-  /** "compact" for the homepage teaser, "full" for the challenge page. */
   variant?: 'compact' | 'full';
   headingLevel?: 'h2' | 'h3';
 }
@@ -33,7 +32,6 @@ export function DailyChallengeCard({ variant = 'full', headingLevel = 'h2' }: Pr
   const entry = useMemo(() => JSON.parse(entryJson) as { best: number; completed: boolean } | null, [entryJson]);
 
   if (!challenge || now === null) {
-    // Same footprint as the loaded card, so nothing jumps when it appears.
     return (
       <div className={`${styles.card} ${styles[variant]} ${styles.skeleton}`} aria-busy="true">
         <p className="muted">Loading today&apos;s challenge…</p>
@@ -48,7 +46,7 @@ export function DailyChallengeCard({ variant = 'full', headingLevel = 'h2' }: Pr
   return (
     <div className={`${styles.card} ${styles[variant]} ${styles[game.accent]}`}>
       <div className={styles.art}>
-        <GameArt gameId={game.id} idSuffix={`daily-${variant}`} />
+        <ClassicGameArt gameId={challenge.gameId} idSuffix={`daily-${variant}`} />
       </div>
       <div className={styles.body}>
         <p className={styles.date}>
@@ -103,7 +101,6 @@ export function DailyChallengeCard({ variant = 'full', headingLevel = 'h2' }: Pr
   );
 }
 
-/** "Coming up" list for the next few days, computed in the browser. */
 export function UpcomingChallenges({ days = 3 }: { days?: number }) {
   const dateKey = useUtcDateKey();
   const upcoming = useMemo(() => {

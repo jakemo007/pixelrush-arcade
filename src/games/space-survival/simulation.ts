@@ -1,16 +1,3 @@
-/**
- * Space Survival rules. Pure TypeScript, no DOM.
- *
- * The ship fires automatically so the controls are the same on keyboard and
- * touch: the player only steers. Difficulty comes from a spawn director whose
- * interval shrinks over time down to a fixed floor, and from new enemy types
- * unlocking at set times. Every entity list has a hard cap.
- *
- * Randomness streams are separated so the enemy spawn timeline for a seed is
- * identical for every player (daily challenge fairness): spawns use `rng`,
- * pickup drops use `dropRng`, cosmetic particles use their own stream.
- */
-
 import { circlesOverlap, clamp } from '../engine/collision';
 import { ParticlePool } from '../engine/particles';
 import type { GameOutcome, GameStats, HudItem, InputSnapshot, Simulation, SoundCue } from '../engine/types';
@@ -62,7 +49,6 @@ export interface Enemy {
   phase: number;
   baseX: number;
   amplitude: number;
-  /** Charger: enter -> aim -> dash. Gunship: enter -> strafe -> leave. */
   state: 'enter' | 'aim' | 'dash' | 'strafe' | 'leave';
   stateTimer: number;
   targetY: number;
@@ -89,12 +75,10 @@ export interface Pickup {
   age: number;
 }
 
-/** Seconds between spawns at time t (before modifiers). Bounded below. */
 export function spawnInterval(t: number): number {
   return Math.max(0.34, 1.15 - t * 0.0075);
 }
 
-/** Enemy speed multiplier at time t, capped at +50%. */
 export function speedScale(t: number): number {
   return 1 + Math.min(t / 240, 0.5);
 }
@@ -236,8 +220,6 @@ export class SpaceSurvivalSimulation implements Simulation<SpaceAction> {
       this.shipY += dy * SHIP_SPEED * dt;
     }
 
-    // Relative drag: the ship follows the finger's movement, not its position,
-    // so the finger never covers the ship.
     const p = input.pointer;
     if (p.pressed) this.drag = { px: p.x, py: p.y, sx: this.shipX, sy: this.shipY };
     if (this.drag && p.down) {
@@ -253,7 +235,6 @@ export class SpaceSurvivalSimulation implements Simulation<SpaceAction> {
     const unclampedY = this.shipY;
     this.shipX = clamp(this.shipX, 18, SS_WIDTH - 18);
     this.shipY = clamp(this.shipY, 70, SS_HEIGHT - 24);
-    // At a screen edge, re-anchor that axis so moving back responds immediately.
     if (this.drag && p.down) {
       if (this.shipX !== unclampedX) {
         this.drag.px = p.x;
@@ -288,9 +269,6 @@ export class SpaceSurvivalSimulation implements Simulation<SpaceAction> {
     const swarm = this.modifier === 'swarm' ? 0.8 : 1;
     this.spawnTimer += spawnInterval(this.time) * swarm;
 
-    // Always draw exactly five random numbers per spawn, before looking at
-    // any game state, so the spawn timeline for a seed never depends on what
-    // the player does.
     const r = [this.rng(), this.rng(), this.rng(), this.rng(), this.rng()] as const;
     const t = this.time;
     let kind = pickWeighted<EnemyKind>(() => r[0], [
@@ -299,7 +277,6 @@ export class SpaceSurvivalSimulation implements Simulation<SpaceAction> {
       ['charger', t >= ENEMY_STATS.charger.unlockAt ? Math.min(3, 1.5 + t / 90) : 0],
       ['gunship', t >= ENEMY_STATS.gunship.unlockAt ? 0.8 : 0],
     ]);
-    // Caps (rare in practice) are the only state-dependent part.
     if (this.enemies.length >= MAX_ENEMIES) return;
     if (kind === 'gunship' && this.enemies.filter((e) => e.kind === 'gunship').length >= 2) kind = 'weaver';
 
@@ -370,7 +347,6 @@ export class SpaceSurvivalSimulation implements Simulation<SpaceAction> {
             if (e.y >= e.targetY) {
               e.state = 'aim';
               e.stateTimer = 0.7;
-              // Lock on to where the ship is now; the dash goes there.
               e.aimX = this.shipX;
               e.aimY = this.shipY;
             }
@@ -454,12 +430,11 @@ export class SpaceSurvivalSimulation implements Simulation<SpaceAction> {
   }
 
   private resolveCollisions(): void {
-    // Player bullets vs enemies.
     for (const b of this.bullets) {
       for (const e of this.enemies) {
-        if (e.hp <= 0 || e.y + e.r < 0) continue; // not on screen yet
+        if (e.hp <= 0 || e.y + e.r < 0) continue;
         if (circlesOverlap(b.x, b.y, b.r, e.x, e.y, e.r)) {
-          b.y = -999; // consumed
+          b.y = -999;
           e.hp -= 1;
           e.flash = 1;
           if (e.hp <= 0) this.destroyEnemy(e, true);
@@ -469,7 +444,6 @@ export class SpaceSurvivalSimulation implements Simulation<SpaceAction> {
     }
     this.bullets = this.bullets.filter((b) => b.y > -900);
 
-    // Enemies and enemy fire vs the ship. A slightly smaller hitbox feels fair.
     if (this.invulnerable <= 0) {
       for (const e of this.enemies) {
         if (e.hp > 0 && circlesOverlap(this.shipX, this.shipY, SHIP_RADIUS, e.x, e.y, e.r * 0.85)) {
@@ -491,7 +465,6 @@ export class SpaceSurvivalSimulation implements Simulation<SpaceAction> {
     this.enemyBullets = this.enemyBullets.filter((b) => b.y < SS_HEIGHT + 900);
     this.enemies = this.enemies.filter((e) => e.hp > 0);
 
-    // Pickups.
     this.pickups = this.pickups.filter((p) => {
       if (!circlesOverlap(this.shipX, this.shipY, SHIP_RADIUS + 6, p.x, p.y, 14)) return true;
       this.cues.push('powerup');

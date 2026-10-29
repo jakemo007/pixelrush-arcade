@@ -9,7 +9,6 @@ import { siteUrl } from '@/lib/seo/site-url';
 import './globals.css';
 
 if (process.env.NODE_ENV === 'production' && siteUrl.source === 'fallback') {
-  // Printed during `next build`: canonical URLs would point at localhost.
   console.warn(
     '\n[pixelrush] NEXT_PUBLIC_SITE_URL is not set, so canonical URLs and the sitemap use http://localhost:3000.\n' +
       '            Set it to your real domain before deploying (see docs/DEPLOYMENT.md).\n',

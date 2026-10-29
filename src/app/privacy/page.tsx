@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { OperatorNote } from '@/components/ui/OperatorNote';
 import { GAME_IDS } from '@/config/games';
+import { gameDataKey } from '@/lib/storage/game-data';
 import { adsConfig, analyticsConfig } from '@/config/integrations';
 import { siteConfig } from '@/config/site';
 import { DAILY_HISTORY_LIMIT, DAILY_PROGRESS_KEY } from '@/lib/storage/daily-progress';
@@ -15,14 +16,10 @@ export const metadata = pageMetadata({
   path: '/privacy/',
 });
 
-/**
- * This page is generated from the actual build configuration: the analytics
- * and advertising sections change automatically when those integrations are
- * enabled, so the policy cannot silently drift from what the site does.
- */
 export default function PrivacyPage() {
   const operator = siteConfig.operatorName || 'the operator of this website';
   const bestKeyExample = personalBestKey(GAME_IDS[0]).replace(GAME_IDS[0], '<game>');
+  const gameDataExample = gameDataKey(GAME_IDS[0], 'prefs').replace(GAME_IDS[0], '<game>').replace(/prefs$/, '<name>');
 
   return (
     <div className="container">
@@ -89,8 +86,21 @@ export default function PrivacyPage() {
                 <td>
                   <code>{bestKeyExample}</code>
                 </td>
-                <td>Your best score for each game and when you set it</td>
+                <td>
+                  Your best result for each game (score, time, moves or strokes) and when you set it. Games with difficulty
+                  levels keep one best per level, under <code>{bestKeyExample}:&lt;level&gt;</code>
+                </td>
                 <td>To show your personal best</td>
+              </tr>
+              <tr>
+                <td>
+                  <code>{gameDataExample}</code>
+                </td>
+                <td>
+                  Game-specific progress, such as your last chosen difficulty, win/loss statistics, the Daily Word Puzzle board
+                  and streak, or which crossword puzzles you have solved
+                </td>
+                <td>To restore your progress and preferences in each game</td>
               </tr>
               <tr>
                 <td>

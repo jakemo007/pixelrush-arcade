@@ -1,11 +1,4 @@
 #!/usr/bin/env node
-/**
- * Minimal static file server for previewing the production build in `out/`.
- * Behaves like typical static hosts: /about/ serves about/index.html,
- * /about redirects to /about/, unknown paths get 404.html.
- *
- * Usage: npm run build && npm run preview   (PORT=4000 to change the port)
- */
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';

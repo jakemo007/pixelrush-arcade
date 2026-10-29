@@ -1,12 +1,14 @@
 import Link from 'next/link';
-import { GAMES, gamePath } from '@/config/games';
+import { CATEGORIES, GAMES, categoryPath, gamePath, gamesInCategory } from '@/config/games';
 import { siteConfig } from '@/config/site';
+import { CATEGORY_CONTENT } from '@/content/categories';
 import { GUIDES } from '@/content/guides';
 import { LogoMark } from './Logo';
 import styles from './SiteFooter.module.css';
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
+  const popular = GAMES.filter((g) => g.featured);
   return (
     <footer className={styles.footer}>
       <div className={`container ${styles.grid}`}>
@@ -19,10 +21,25 @@ export function SiteFooter() {
             Personal bests and daily progress are stored only in your browser. There are no accounts and no global leaderboards.
           </p>
         </div>
-        <nav aria-label="Games" className={styles.column}>
+        <nav aria-label="Game categories" className={styles.column}>
           <p className={styles.heading}>Games</p>
           <ul>
-            {GAMES.map((g) => (
+            <li>
+              <Link href="/games/">All {GAMES.length} games</Link>
+            </li>
+            {CATEGORIES.map((c) => (
+              <li key={c.id}>
+                <Link href={categoryPath(c.id)}>
+                  {CATEGORY_CONTENT[c.id].heading} <span className={styles.count}>{gamesInCategory(c.id).length}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <nav aria-label="Popular games" className={styles.column}>
+          <p className={styles.heading}>Popular</p>
+          <ul>
+            {popular.map((g) => (
               <li key={g.id}>
                 <Link href={gamePath(g.id)}>{g.name}</Link>
               </li>

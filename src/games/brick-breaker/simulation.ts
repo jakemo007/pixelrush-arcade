@@ -1,18 +1,3 @@
-/**
- * Brick Breaker rules. Pure TypeScript, no DOM.
- *
- * Collision robustness:
- *  - the ball moves in sub-steps of at most MAX_SUBSTEP pixels, far smaller
- *    than a brick, so it cannot tunnel through bricks or walls at any speed;
- *  - all brick contacts in a sub-step are combined into one reflection, so a
- *    hit on the seam between two bricks bounces once instead of cancelling;
- *  - the ball is pushed out along the contact normal, so it never rests
- *    inside a brick;
- *  - walls clamp the position, and the ball keeps a minimum vertical speed so
- *    it cannot bounce sideways forever;
- *  - a non-finite position resets the serve rather than losing the ball.
- */
-
 import { circleRectContact, clamp, rectsOverlap, reflect, type Rect } from '../engine/collision';
 import { ParticlePool } from '../engine/particles';
 import type { GameOutcome, GameStats, HudItem, InputSnapshot, Simulation, SoundCue } from '../engine/types';
@@ -28,16 +13,13 @@ export const BALL_R = 7;
 export const BRICK_W = 50;
 export const BRICK_H = 20;
 export const BRICK_GAP = 4;
-/** Grid is nearly flush with the walls so there is no channel narrower than the ball. */
 export const GRID_X = 2;
 export const GRID_Y = 96;
 export const COLUMNS = 10;
 export const START_LIVES = 3;
 export const MAX_LIVES = 5;
 export const MAX_SUBSTEP = 3;
-/** Steepest paddle bounce, measured from vertical. */
 export const MAX_BOUNCE_ANGLE = (60 * Math.PI) / 180;
-/** The ball always keeps at least this fraction of its speed vertically. */
 export const MIN_VERTICAL_RATIO = 0.3;
 
 const PADDLE_KEY_SPEED = 720;
@@ -61,7 +43,6 @@ export interface LevelDef {
   rows: readonly string[];
 }
 
-/** '.' empty, '1'-'3' hit points, '#' indestructible steel. 10 columns each. */
 export const LEVELS: readonly LevelDef[] = [
   { name: 'Warm-Up', rows: ['1111111111', '1111111111', '1111111111', '1111111111'] },
   { name: 'Pyramid', rows: ['....22....', '...2112...', '..211112..', '.21111112.', '2111111112'] },
@@ -122,7 +103,6 @@ export function parseLevel(rows: readonly string[]): Brick[] {
   return bricks;
 }
 
-/** Points for destroying a brick: tougher bricks and longer combos score more. */
 export function brickPoints(maxHp: number, comboIndex: number): number {
   return Math.round(10 * maxHp * (1 + 0.25 * Math.min(Math.max(0, comboIndex), 8)));
 }
@@ -132,7 +112,6 @@ export function levelSpeed(level: number, modifier: string | null): number {
   return modifier === 'fast-ball' ? base * 1.15 : base;
 }
 
-/** Keeps the ball from travelling (almost) horizontally forever. */
 export function enforceMinVertical(ball: Ball, preferDown: boolean): void {
   const speed = Math.hypot(ball.vx, ball.vy);
   if (speed === 0) return;
@@ -163,7 +142,6 @@ export class BrickBreakerSimulation implements Simulation<BrickBreakerAction> {
   paddleW: number;
   wideTimer = 0;
   slowTimer = 0;
-  /** Seconds since the current phase started (used for banners and hints). */
   phaseTime = 0;
   shake = 0;
   outcome: GameOutcome | null = null;
@@ -339,7 +317,6 @@ export class BrickBreakerSimulation implements Simulation<BrickBreakerAction> {
 
     this.sincePaddle += dt;
     if (this.sincePaddle > STUCK_SECONDS) {
-      // Rare safety net: rotate the ball if it hasn't touched the paddle in a long time.
       const a = 0.26;
       const vx = ball.vx * Math.cos(a) - ball.vy * Math.sin(a);
       const vy = ball.vx * Math.sin(a) + ball.vy * Math.cos(a);
@@ -357,7 +334,6 @@ export class BrickBreakerSimulation implements Simulation<BrickBreakerAction> {
       this.collideWalls(true);
       this.collideBricks();
       if (this.phase !== 'live') return;
-      // A brick push-out near a wall must never leave the ball outside the arena.
       this.collideWalls(false);
       this.collidePaddle();
       if (ball.y - BALL_R > BB_HEIGHT) {
@@ -419,7 +395,6 @@ export class BrickBreakerSimulation implements Simulation<BrickBreakerAction> {
     ny /= length;
     ball.x += nx * depth;
     ball.y += ny * depth;
-    // Only reflect if moving into the surface (prevents double flips).
     if (ball.vx * nx + ball.vy * ny < 0) {
       const r = reflect(ball.vx, ball.vy, nx, ny);
       ball.vx = r.vx;

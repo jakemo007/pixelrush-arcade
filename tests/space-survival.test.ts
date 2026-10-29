@@ -102,7 +102,6 @@ describe('Space Survival rules', () => {
     sim.enemies.push(enemyAt(sim.shipX, sim.shipY, { hp: 50 }));
     for (let i = 0; i < 10; i++) sim.update(STEP, none);
     expect(sim.hull).toBe(2);
-    // After invulnerability ends, another collision hurts again.
     for (let i = 0; i < INVULNERABLE_SECONDS * 120 + 5; i++) sim.update(STEP, none);
     sim.enemies.push(enemyAt(sim.shipX, sim.shipY, { hp: 50 }));
     sim.update(STEP, none);
@@ -128,7 +127,7 @@ describe('Space Survival rules', () => {
       const spawns: string[] = [];
       const seen = new Set<Enemy>();
       for (let i = 0; i < 120 * 40; i++) {
-        sim.invulnerable = 10; // keep the ship alive for the comparison
+        sim.invulnerable = 10;
         sim.update(STEP, moving && i % 200 < 100 ? left : none);
         for (const e of sim.enemies) {
           if (!seen.has(e)) {

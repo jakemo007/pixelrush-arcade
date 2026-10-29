@@ -1,11 +1,4 @@
 #!/usr/bin/env node
-/**
- * Pre-launch configuration report. Reads environment variables (and
- * .env.local / .env.production.local if present) plus src/config/site.ts and
- * lists anything that still needs attention. It never prints secret values.
- *
- * Usage: npm run check:launch
- */
 import { existsSync, readFileSync } from 'node:fs';
 
 function loadEnvFile(path) {

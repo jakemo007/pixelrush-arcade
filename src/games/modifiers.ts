@@ -1,9 +1,4 @@
-/**
- * Daily-challenge modifiers. Each game interprets only its own modifier IDs;
- * an unknown or null modifier means "standard rules".
- */
-
-import type { GameId } from '@/config/games';
+import { isChallengeGameId, type ChallengeGameId, type GameId } from '@/config/games';
 
 export interface ModifierInfo {
   id: string;
@@ -11,7 +6,7 @@ export interface ModifierInfo {
   description: string;
 }
 
-export const MODIFIERS: Record<GameId, readonly ModifierInfo[]> = {
+export const MODIFIERS: Record<ChallengeGameId, readonly ModifierInfo[]> = {
   'neon-dash': [
     { id: 'turbo-start', name: 'Turbo Start', description: 'The run starts 20% faster than usual.' },
     { id: 'moon-gravity', name: 'Moon Gravity', description: 'Lower gravity: jumps float longer, so time your landings.' },
@@ -30,14 +25,11 @@ export const MODIFIERS: Record<GameId, readonly ModifierInfo[]> = {
 };
 
 export function getModifier(gameId: GameId, id: string | null): ModifierInfo | null {
-  if (!id) return null;
+  if (!id || !isChallengeGameId(gameId)) return null;
   return MODIFIERS[gameId].find((m) => m.id === id) ?? null;
 }
 
-/** Options that every game simulation accepts. */
 export interface RunOptions {
-  /** Seed for gameplay randomness (course layout, spawns, drops). */
   seed: number;
-  /** Daily-challenge modifier ID, or null for standard rules. */
   modifier: string | null;
 }

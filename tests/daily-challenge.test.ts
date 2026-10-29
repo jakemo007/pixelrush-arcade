@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GAME_IDS } from '@/config/games';
+import { CHALLENGE_GAME_IDS, GAME_IDS } from '@/config/games';
 import { MODIFIERS } from '@/games/modifiers';
 import {
   formatDateKey,
@@ -23,7 +23,6 @@ describe('daily challenge', () => {
   });
 
   it('uses UTC regardless of the local offset used to create the Date', () => {
-    // 2026-10-24 20:30 in New York (UTC-4) is 2026-10-25 00:30 UTC.
     const fromOffset = getDailyChallenge(new Date('2026-10-24T20:30:00-04:00'));
     expect(fromOffset.dateKey).toBe('2026-10-25');
     expect(fromOffset).toEqual(getDailyChallenge(day('2026-10-25T12:00:00Z')));
@@ -37,14 +36,13 @@ describe('daily challenge', () => {
     expect(after.gameId).not.toBe(before.gameId);
   });
 
-  it('rotates through every game and varies the challenge across dates', () => {
+  it('rotates through every challenge game and varies the challenge across dates', () => {
     const challenges = Array.from({ length: 60 }, (_, i) => getDailyChallenge(new Date(Date.UTC(2026, 0, 1 + i))));
     expect(new Set(challenges.map((c) => c.seed)).size).toBe(60);
-    for (const id of GAME_IDS) {
+    for (const id of CHALLENGE_GAME_IDS) {
       expect(challenges.filter((c) => c.gameId === id).length).toBe(20);
     }
     expect(new Set(challenges.map((c) => `${c.title}:${c.goal.target}`)).size).toBeGreaterThan(15);
-    // Consecutive days never feature the same game.
     for (let i = 1; i < challenges.length; i++) expect(challenges[i]!.gameId).not.toBe(challenges[i - 1]!.gameId);
   });
 
@@ -65,7 +63,13 @@ describe('daily challenge', () => {
     const a = getChallengeForDateKey('2026-10-24');
     const b = getChallengeForDateKey('2026-10-24');
     expect(a).toEqual(b);
-    expect(a?.gameId).toBe(GAME_IDS[Math.floor(Date.UTC(2026, 9, 24) / 86_400_000) % GAME_IDS.length]);
+    expect(a?.gameId).toBe(CHALLENGE_GAME_IDS[Math.floor(Date.UTC(2026, 9, 24) / 86_400_000) % CHALLENGE_GAME_IDS.length]);
+  });
+
+  it('keeps the original three-game rotation now that the catalogue is larger', () => {
+    expect([...CHALLENGE_GAME_IDS]).toEqual(['neon-dash', 'brick-breaker', 'space-survival']);
+    expect(GAME_IDS.slice(0, 3)).toEqual([...CHALLENGE_GAME_IDS]);
+    expect(getChallengeForDateKey('2026-10-24')?.gameId).toBe('space-survival');
   });
 
   it('checks goals against run stats', () => {

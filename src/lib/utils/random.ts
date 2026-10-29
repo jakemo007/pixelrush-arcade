@@ -1,11 +1,5 @@
-/**
- * Small deterministic random utilities. Seeded generators make the daily
- * challenge identical in every browser and let tests replay game runs.
- */
-
 export type Rng = () => number;
 
-/** 32-bit FNV-1a hash of a string. Stable across browsers and Node. */
 export function hashString(input: string): number {
   let hash = 0x811c9dc5;
   for (let i = 0; i < input.length; i++) {
@@ -15,7 +9,6 @@ export function hashString(input: string): number {
   return hash >>> 0;
 }
 
-/** Mulberry32: fast, well-distributed 32-bit PRNG returning values in [0, 1). */
 export function createRng(seed: number): Rng {
   let state = seed >>> 0;
   return () => {
@@ -27,7 +20,6 @@ export function createRng(seed: number): Rng {
   };
 }
 
-/** Derives an independent stream from a seed so that, e.g., cosmetic effects never shift gameplay randomness. */
 export function deriveSeed(seed: number, stream: string): number {
   return hashString(`${seed >>> 0}:${stream}`);
 }
@@ -45,7 +37,6 @@ export function pick<T>(rng: Rng, items: readonly T[]): T {
   return items[Math.floor(rng() * items.length)] as T;
 }
 
-/** Picks from weighted entries; weights must be >= 0 with a positive total. */
 export function pickWeighted<T>(rng: Rng, entries: readonly (readonly [T, number])[]): T {
   const total = entries.reduce((sum, [, w]) => sum + Math.max(0, w), 0);
   if (total <= 0) throw new Error('pickWeighted() requires a positive total weight');
@@ -57,7 +48,6 @@ export function pickWeighted<T>(rng: Rng, entries: readonly (readonly [T, number
   return entries[entries.length - 1]![0];
 }
 
-/** A fresh, non-deterministic seed for ordinary (non-challenge) runs. */
 export function randomSeed(): number {
   return (Math.random() * 4294967296) >>> 0;
 }

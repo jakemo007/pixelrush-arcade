@@ -1,18 +1,3 @@
-/**
- * Neon Dash: endless runner rules. Pure TypeScript, no DOM.
- *
- * World units are logical pixels. The player stays at a fixed screen x while
- * the world scrolls left. The course is generated ahead of the player from a
- * seeded RNG and depends only on distance travelled (never on player input),
- * so the same seed always produces the same course.
- *
- * Fairness rules enforced by the generator (and checked in tests):
- *  - every gap between obstacles is at least `minGapSeconds` of travel,
- *    enough to land from a full jump, react and jump again;
- *  - pits are never wider than a fraction of the full jump distance;
- *  - speed and gap tightening are both capped.
- */
-
 import { rectsOverlap, circleRectOverlap, type Rect } from '../engine/collision';
 import { ParticlePool } from '../engine/particles';
 import type { GameOutcome, GameStats, HudItem, InputSnapshot, Simulation, SoundCue } from '../engine/types';
@@ -25,13 +10,10 @@ export const GROUND_Y = 440;
 export const PLAYER_X = 180;
 export const PLAYER_SIZE = 34;
 export const SHARD_POINTS = 20;
-/** Logical pixels of distance per point. */
 export const DISTANCE_PER_POINT = 25;
-/** Pixels per displayed "meter". */
 export const PIXELS_PER_METER = 40;
 export const FIRST_OBSTACLE_X = 1400;
 
-/** How far below the ground line the player can dip and still land (forgiving pit edges). */
 const LANDING_TOLERANCE = 16;
 const DRONE_BOTTOM = GROUND_Y - PLAYER_SIZE - 14;
 const DEATH_DURATION = 0.75;
@@ -44,15 +26,11 @@ export const NEON_DASH_BINDINGS: Readonly<Record<NeonDashAction, readonly string
 export interface Physics {
   gravity: number;
   jumpVelocity: number;
-  /** Releasing jump early caps upward speed to this, giving a short hop. */
   jumpCutVelocity: number;
   startSpeed: number;
   maxSpeed: number;
-  /** Speed gained per pixel travelled is derived from this (px/s^2). */
   acceleration: number;
-  /** Seconds after running off an edge during which a jump still works. */
   coyoteTime: number;
-  /** Seconds a jump press is remembered before landing. */
   jumpBuffer: number;
   shardChance: number;
 }
@@ -82,17 +60,14 @@ export function physicsFor(modifier: string | null): Physics {
   }
 }
 
-/** Total time in the air for a full (held) jump on flat ground. */
 export function airTime(p: Physics): number {
   return (2 * p.jumpVelocity) / p.gravity;
 }
 
-/** Peak height of a full jump. */
 export function jumpApex(p: Physics): number {
   return (p.jumpVelocity * p.jumpVelocity) / (2 * p.gravity);
 }
 
-/** Constant acceleration expressed over distance: v^2 = v0^2 + 2ad, capped. */
 export function speedAtDistance(p: Physics, distance: number): number {
   return Math.min(p.maxSpeed, Math.sqrt(p.startSpeed * p.startSpeed + 2 * p.acceleration * Math.max(0, distance)));
 }
@@ -101,12 +76,10 @@ export function neonDashScore(distance: number, shards: number): number {
   return Math.floor(Math.max(0, distance) / DISTANCE_PER_POINT) + Math.max(0, shards) * SHARD_POINTS;
 }
 
-/** Difficulty tier from distance: 0 = warm-up, 1 = pits appear, 2 = drones appear. */
 export function tierAt(distance: number): 0 | 1 | 2 {
   return distance < 7000 ? 0 : distance < 20000 ? 1 : 2;
 }
 
-/** Minimum and random-extra gap after an obstacle, in seconds of travel. */
 export function gapSeconds(p: Physics, tier: 0 | 1 | 2): { min: number; extra: number } {
   return { min: airTime(p) * 0.55 + 0.42, extra: [0.95, 0.6, 0.35][tier]! };
 }
@@ -115,12 +88,9 @@ export type ObstacleKind = 'spike' | 'block' | 'pit' | 'drone';
 
 export interface Obstacle {
   kind: ObstacleKind;
-  /** World x of the left edge. */
   x: number;
   w: number;
-  /** Height above the ground (spikes/blocks) or drone body height. */
   h: number;
-  /** Number of spikes in a spike group. */
   count: number;
   phase: number;
 }
@@ -159,7 +129,6 @@ const PATTERN_WEIGHTS: Record<0 | 1 | 2, readonly (readonly [Pattern, number])[]
   ],
 };
 
-/** Widest pit, in seconds of travel at the current speed, per tier. */
 export const MAX_PIT_SECONDS: Record<0 | 1 | 2, number> = { 0: 0.28, 1: 0.32, 2: 0.36 };
 const SPIKE_WIDTH = 30;
 const SPIKE_HEIGHT = 32;
@@ -172,7 +141,6 @@ export class NeonDashSimulation implements Simulation<NeonDashAction> {
   readonly particles: ParticlePool;
 
   time = 0;
-  /** Distance scrolled in world pixels. */
   scroll = 0;
   speed: number;
   playerY = GROUND_Y - PLAYER_SIZE;
@@ -181,7 +149,6 @@ export class NeonDashSimulation implements Simulation<NeonDashAction> {
   shardsCollected = 0;
   dying = false;
   fell = false;
-  /** Cosmetic: 0..1 intensities for the renderer. */
   shake = 0;
   flash = 0;
   squash = 0;
@@ -236,12 +203,10 @@ export class NeonDashSimulation implements Simulation<NeonDashAction> {
     return out;
   }
 
-  /** Player hitbox in screen coordinates (slightly smaller than the sprite, to feel fair). */
   playerHitbox(): Rect {
     return { x: PLAYER_X + 4, y: this.playerY + 4, w: PLAYER_SIZE - 8, h: PLAYER_SIZE - 6 };
   }
 
-  /** Obstacle hitbox in screen coordinates, or null for pits (handled as missing ground). */
   obstacleHitbox(o: Obstacle): Rect | null {
     const sx = o.x - this.scroll;
     switch (o.kind) {
@@ -260,7 +225,6 @@ export class NeonDashSimulation implements Simulation<NeonDashAction> {
     return DRONE_BOTTOM - o.h + Math.sin(this.time * 3 + o.phase) * 3;
   }
 
-  /** True if the player's feet have ground under them (any overlap counts). */
   isSupported(): boolean {
     const footLeft = this.scroll + PLAYER_X + 5;
     const footRight = this.scroll + PLAYER_X + PLAYER_SIZE - 5;
@@ -295,7 +259,6 @@ export class NeonDashSimulation implements Simulation<NeonDashAction> {
     this.speed = speedAtDistance(p, this.scroll);
     this.scroll += this.speed * dt;
 
-    // --- jumping: buffered presses + coyote time + variable height ---------
     const jump = input.actions.jump;
     const tapped = jump.pressed || input.pointer.pressed;
     const holding = jump.held || input.pointer.down;
@@ -314,7 +277,6 @@ export class NeonDashSimulation implements Simulation<NeonDashAction> {
     if (this.rising && !holding && this.vy < -p.jumpCutVelocity) this.vy = -p.jumpCutVelocity;
     if (this.vy >= 0) this.rising = false;
 
-    // --- vertical motion, ground and pits ---------------------------------
     const prevBottom = this.playerY + PLAYER_SIZE;
     this.vy += p.gravity * dt;
     this.playerY += this.vy * dt;
@@ -338,7 +300,6 @@ export class NeonDashSimulation implements Simulation<NeonDashAction> {
       }
     }
 
-    // --- obstacles and shards ----------------------------------------------
     const hitbox = this.playerHitbox();
     for (const o of this.obstacles) {
       const box = this.obstacleHitbox(o);
@@ -423,14 +384,9 @@ export class NeonDashSimulation implements Simulation<NeonDashAction> {
 export interface CoursePiece {
   obstacle: Obstacle;
   shards: Shard[];
-  /** Clear running distance after this obstacle before the next one. */
   gapAfter: number;
 }
 
-/**
- * Generates the course one obstacle at a time from a seed. Depends only on
- * distance, so the same seed and physics always yield the same course.
- */
 export class CourseGenerator {
   nextX = FIRST_OBSTACLE_X;
   private readonly rng: Rng;
@@ -477,8 +433,6 @@ export class CourseGenerator {
     }
 
     const shards: Shard[] = [];
-    // Optional shard: over jumpable obstacles at jump height, or at running
-    // height under a drone (rewarding staying low).
     if (rng() < p.shardChance) {
       const cx = obstacle.x + obstacle.w / 2;
       const y = obstacle.kind === 'drone' ? GROUND_Y - PLAYER_SIZE / 2 : GROUND_Y - PLAYER_SIZE / 2 - jumpApex(p) * 0.8;
@@ -488,7 +442,6 @@ export class CourseGenerator {
     const gap = gapSeconds(p, tier);
     const gapAfter = (gap.min + rng() * gap.extra) * v;
 
-    // Sometimes leave a shard on the ground in the middle of a long gap.
     if (gapAfter > v * 1.1 && rng() < p.shardChance * 0.6) {
       shards.push({ x: obstacle.x + obstacle.w + gapAfter / 2, y: GROUND_Y - PLAYER_SIZE / 2, taken: false, phase: rng() * 6 });
     }

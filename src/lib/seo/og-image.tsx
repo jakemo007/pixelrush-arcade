@@ -6,9 +6,8 @@ export const OG_SIZE = { width: 1200, height: 630 };
 const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#38e8ff"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="14" fill="url(#g)"/><path d="M27 18 L47 32 L27 46 Z" fill="#0a0d1a"/><rect x="11" y="22" width="11" height="4.5" rx="2.25" fill="#0a0d1a"/><rect x="8" y="29.75" width="14" height="4.5" rx="2.25" fill="#0a0d1a"/><rect x="11" y="37.5" width="11" height="4.5" rx="2.25" fill="#0a0d1a"/></svg>`;
 const LOGO_DATA_URI = `data:image/svg+xml;base64,${Buffer.from(LOGO_SVG).toString('base64')}`;
 
-const ACCENTS = { cyan: '#38e8ff', violet: '#a78bfa', magenta: '#ff5bdc' } as const;
+const ACCENTS = { cyan: '#38e8ff', violet: '#a78bfa', magenta: '#ff5bdc', amber: '#ffd23f', green: '#4dffb5' } as const;
 
-/** Renders a branded 1200x630 social preview image at build time. */
 export function renderOgImage({ title, subtitle, accent = 'cyan' }: { title: string; subtitle: string; accent?: keyof typeof ACCENTS }) {
   const color = ACCENTS[accent];
   return new ImageResponse(
