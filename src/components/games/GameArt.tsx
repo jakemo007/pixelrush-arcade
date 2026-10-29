@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { isChallengeGameId, type GameId } from '@/config/games';
+import { getGame, isChallengeGameId, type GameId } from '@/config/games';
 import { Art as SolitaireArt } from '@/games/solitaire/art';
 import { Art as SudokuArt } from '@/games/sudoku/art';
 import { Art as SnakeArt } from '@/games/snake/art';
@@ -49,6 +49,21 @@ const ART: Record<Exclude<GameId, 'neon-dash' | 'brick-breaker' | 'space-surviva
   'basketball': BasketballArt,
 };
 
+function FallbackArt({ name }: { name: string }) {
+  return (
+    <>
+      <rect width="320" height="200" fill="#141a33" />
+      <circle cx="160" cy="84" r="34" fill="#2b3566" />
+      <text x="160" y="96" textAnchor="middle" fontSize="34" fontWeight="700" fill="#e8ecff">
+        {name.charAt(0)}
+      </text>
+      <text x="160" y="152" textAnchor="middle" fontSize="18" fill="#aab3e0">
+        {name}
+      </text>
+    </>
+  );
+}
+
 interface ArtProps {
   gameId: GameId;
   idSuffix?: string;
@@ -61,7 +76,7 @@ export function GameArt({ gameId, label, className, idSuffix = 'art' }: ArtProps
   const Body = isChallengeGameId(gameId) ? null : ART[gameId];
   return (
     <svg viewBox="0 0 320 200" className={className} preserveAspectRatio="xMidYMid slice" focusable="false" {...a11y}>
-      {isChallengeGameId(gameId) ? <ClassicArtBody gameId={gameId} s={idSuffix} /> : Body && <Body s={idSuffix} />}
+      {isChallengeGameId(gameId) ? <ClassicArtBody gameId={gameId} s={idSuffix} /> : Body ? <Body s={idSuffix} /> : <FallbackArt name={getGame(gameId).name} />}
     </svg>
   );
 }
