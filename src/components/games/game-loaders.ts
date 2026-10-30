@@ -13,6 +13,7 @@ export const CANVAS_LOADERS: Partial<Record<GameId, () => Promise<{ default: Any
   'car-racing': () => import('@/games/car-racing'),
   'mini-golf': () => import('@/games/mini-golf'),
   basketball: () => import('@/games/basketball'),
+  stackfall: () => import('@/games/stackfall'),
 };
 
 export const DOM_LOADERS: Partial<Record<GameId, () => Promise<{ default: ComponentType<DomGameProps> }>>> = {
@@ -30,6 +31,7 @@ export const DOM_LOADERS: Partial<Record<GameId, () => Promise<{ default: Compon
   'word-search': () => import('@/games/word-search'),
   'typing-speed': () => import('@/games/typing-speed'),
   'memory-match': () => import('@/games/memory-match'),
+  'drop-four': () => import('@/games/drop-four'),
 };
 
 export async function loadGameDefinition(id: GameId): Promise<AnyGameDefinition> {

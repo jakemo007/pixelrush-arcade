@@ -20,6 +20,8 @@ import { Art as MemoryMatchArt } from '@/games/memory-match/art';
 import { Art as CarRacingArt } from '@/games/car-racing/art';
 import { Art as MiniGolfArt } from '@/games/mini-golf/art';
 import { Art as BasketballArt } from '@/games/basketball/art';
+import { Art as StackfallArt } from '@/games/stackfall/art';
+import { Art as DropFourArt } from '@/games/drop-four/art';
 import { ClassicArtBody } from './ClassicGameArt';
 
 export interface GameArtBodyProps {
@@ -47,6 +49,8 @@ const ART: Record<Exclude<GameId, 'neon-dash' | 'brick-breaker' | 'space-surviva
   'car-racing': CarRacingArt,
   'mini-golf': MiniGolfArt,
   'basketball': BasketballArt,
+  'stackfall': StackfallArt,
+  'drop-four': DropFourArt,
 };
 
 function FallbackArt({ name }: { name: string }) {

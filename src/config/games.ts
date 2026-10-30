@@ -18,6 +18,8 @@ import { meta as memoryMatch } from '@/games/memory-match/meta';
 import { meta as carRacing } from '@/games/car-racing/meta';
 import { meta as miniGolf } from '@/games/mini-golf/meta';
 import { meta as basketball } from '@/games/basketball/meta';
+import { meta as stackfall } from '@/games/stackfall/meta';
+import { meta as dropFour } from '@/games/drop-four/meta';
 
 export const GAME_IDS = [
   'neon-dash',
@@ -43,6 +45,8 @@ export const GAME_IDS = [
   'car-racing',
   'mini-golf',
   'basketball',
+  'stackfall',
+  'drop-four',
 ] as const;
 export type GameId = (typeof GAME_IDS)[number];
 
@@ -209,6 +213,8 @@ export const GAMES: readonly GameInfo[] = [
   carRacing,
   miniGolf,
   basketball,
+  stackfall,
+  dropFour,
 ];
 
 export function isGameId(value: unknown): value is GameId {

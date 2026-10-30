@@ -166,6 +166,57 @@ Enemies cannot be hit until they are on screen.
 
 ---
 
+## Stackfall (falling-block puzzle)
+
+Logical size **480 × 600**: a 10 × 20 board of 28 px cells at (20, 20), with a Hold box and a Next list (3 pieces) in the side panel. Constants live at the top of `src/games/stackfall/simulation.ts`; piece shapes and rotations are in `pieces.ts`.
+
+| Item | Value |
+| --- | --- |
+| Pieces | 7 four-square shapes (I, O, T, S, Z, J, L), dealt from a shuffled bag so each appears once per 7 |
+| Spawn | top centre, rotation 0; a spawn that overlaps the stack ends the run |
+| Gravity | `max(0.02, (0.8 − 0.007 × (level − 1)) ^ (level − 1))` seconds per row: 1 s at level 1, ≈ 0.36 s at level 5, ≈ 0.06 s at level 10, floor 0.02 s from level 13 |
+| Level | 1 + rows cleared / 10, maximum 15 |
+| Soft drop | one row per 0.04 s while held |
+| Auto-repeat | first repeat after 0.17 s, then every 0.045 s |
+| Lock delay | 0.5 s on the stack; a successful move or turn resets it, up to 15 times per piece (the count resets when the piece reaches a new lowest row) |
+| Turning | clockwise and counter-clockwise; the square does not turn; if the turned piece collides it is tried at offsets (−1, 0), (+1, 0), (−2, 0), (+2, 0), (0, −1), otherwise the turn is ignored |
+| Hold | one swap per piece; unlocks when the next piece lands |
+| Row clear | 0.3 s flash, then rows are removed and the rest falls; input is ignored meanwhile |
+
+**Controls:** `←`/`→`/`A`/`D` move, `↓`/`S` soft drop, `↑`/`W`/`X` turn clockwise, `Z` counter-clockwise, `Space` hard drop, `C`/`Shift` hold.
+
+**Touch (single pointer):** drag moves one column per 28 logical px of horizontal travel; holding a finger more than 50 px below where it started soft drops; a tap (≤ 12 px travel, ≤ 0.4 s) turns clockwise, or holds when it lands in the Hold box; a downward flick (≥ 90 px within 0.3 s, mostly vertical) hard drops. There is no counter-clockwise turn on touch.
+
+**Scoring:** 100 / 300 / 500 / 800 for 1 / 2 / 3 / 4 rows, times the level at the time of the clear; +1 per row of soft drop, +2 per row of hard drop. The run has no win state; it ends with outcome `lost` after a 1.1 s animation.
+
+**Stats:** `score`, `rows`, `level`, `pieces`.
+
+---
+
+## Drop Four (four in a row)
+
+DOM game (`src/games/drop-four/`). Pure rules in `rules.ts`, computer opponent in `ai.ts`, UI in `index.tsx`.
+
+| Item | Value |
+| --- | --- |
+| Board | 7 columns × 6 rows; a disc falls to the lowest empty row; Red (player 1) always moves first |
+| Win | 4 or more of one colour in a row, column or either diagonal; the whole run is highlighted. A full board with no run is a draw |
+| Modes | Easy, Medium, Hard (human plays Red against the computer) and Two players (same device) |
+| Easy | negamax with alpha-beta, depth 2, plays a random legal column 30% of the time |
+| Medium | depth 4 |
+| Hard | depth 6 |
+| Evaluation | +3 per disc in the centre column (−3 for the rival's), plus window scores over all 69 four-cell windows (1 / 4 / 16 for 1 / 2 / 3 discs with no rival disc in the window) |
+| Search order | columns 4, 3, 5, 2, 6, 1, 7 (centre first); an immediate win is always taken; ties are broken at random in the UI and by centre order in tests |
+| Timing | the computer replies after 550 ms; the search itself is deterministic, depth-limited and runs in under about 100 ms, so it is not moved to a worker |
+
+**Controls:** `←`/`→`/`Home`/`End` move between columns, `Enter`/`Space`/`↓` drop, `1`–`7` drop straight into a column; click or tap any cell of a column. Take back removes the last move, and against the computer its reply too; it is unavailable after the game ends.
+
+**Records:** there is no personal best (`best: null`). Wins, losses and draws against the computer are stored per difficulty under `host.storage` as `stats-easy`, `stats-medium` and `stats-hard`; Two players records nothing.
+
+**Accessibility:** the board is a `grid` with one labelled `gridcell` per space ("Row 3, column 4, Red disc"); the cursor column's top cell has `data-game-focus`. Discs differ by shape (ring vs diamond) as well as colour. The drop animation is skipped for `prefers-reduced-motion`.
+
+---
+
 ## Daily Challenge rules
 
 Implemented in `src/lib/daily/challenge.ts` and tested in `tests/daily-challenge.test.ts`.

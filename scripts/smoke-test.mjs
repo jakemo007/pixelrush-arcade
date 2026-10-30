@@ -445,6 +445,117 @@ console.log('\nTouch device (iPhone-sized, touch events)');
   await context.close();
 }
 
+console.log('\nStackfall (keyboard, game over, personal best)');
+{
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  const errors = watch(page, 'stackfall');
+  await page.goto(`${BASE}/games/stackfall/`, { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: 'Start game' }).click();
+  await waitForStatus(page, 'playing');
+  check(toNumber(await hudValue(page, 'Level')) === 1 && toNumber(await hudValue(page, 'Rows')) === 0, 'starts at level 1 with 0 rows');
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('ArrowUp');
+  await page.keyboard.press('Space');
+  await sleep(300);
+  const score = toNumber(await hudValue(page, 'Score'));
+  check(score > 0, `a hard drop scores points (${score})`);
+  await page.keyboard.press('KeyC');
+  await sleep(150);
+  await page.keyboard.press('KeyP');
+  await waitForStatus(page, 'paused');
+  await page.keyboard.press('KeyP');
+  await waitForStatus(page, 'playing');
+  check(true, 'hold, pause and resume work');
+  for (let i = 0; i < 40 && (await statusOf(page)) === 'playing'; i++) {
+    await page.keyboard.press('Space');
+    await sleep(90);
+  }
+  await waitForStatus(page, 'over', 8000);
+  check(true, 'stacking pieces in the middle ends the run (game over)');
+  const best = await page.evaluate(() => localStorage.getItem('pixelrush:v1:best:stackfall'));
+  check(Boolean(best && JSON.parse(best).score > 0), `personal best saved locally (${best})`);
+  await page.screenshot({ path: `${OUT_DIR}/stackfall-over.png` });
+  check(errors.length === 0, `no console errors${errors.length ? `: ${errors.join(' | ')}` : ''}`);
+  await context.close();
+}
+
+console.log('\nStackfall (touch)');
+{
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  const page = await context.newPage();
+  const errors = watch(page, 'stackfall-touch');
+  await page.goto(`${BASE}/games/stackfall/`, { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: 'Start game' }).tap();
+  await waitForStatus(page, 'playing');
+  const box = await page.locator('canvas').boundingBox();
+  await page.touchscreen.tap(box.x + box.width * 0.35, box.y + box.height * 0.5);
+  await sleep(500);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  check((await statusOf(page)) === 'playing' && overflow <= 0, 'a tap turns the piece and the run continues, no overflow');
+  check(errors.length === 0, `no console errors${errors.length ? `: ${errors.join(' | ')}` : ''}`);
+  await context.close();
+}
+
+console.log('\nDrop Four (vs computer, keyboard, take back, two players)');
+{
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  const errors = watch(page, 'drop-four');
+  const moves = async () => toNumber(await hudValue(page, 'Moves'));
+  const waitForMoves = (n) =>
+    page.waitForFunction(
+      (target) => {
+        for (const div of document.querySelectorAll('section[data-status] dl > div')) {
+          if (div.querySelector('dt')?.textContent === 'Moves') return Number(div.querySelector('dd')?.textContent) === target;
+        }
+        return false;
+      },
+      n,
+      { timeout: 6000 },
+    );
+  await page.goto(`${BASE}/games/drop-four/`, { waitUntil: 'networkidle' });
+  await page.getByRole('gridcell', { name: 'Row 1, column 4, empty', exact: true }).click();
+  await page.getByRole('gridcell', { name: /Row 6, column 4, Red disc/ }).waitFor({ timeout: 3000 });
+  check(true, 'clicking a column drops a Red disc to the bottom');
+  await waitForMoves(2);
+  check(await page.getByRole('gridcell', { name: /Yellow disc/ }).first().isVisible(), 'the computer replies with a Yellow disc');
+  await page.locator('[data-game-focus]').first().focus();
+  await page.keyboard.press('Digit1');
+  await waitForMoves(4);
+  check(true, 'the number key 1 drops a disc and the computer replies');
+  await page.getByRole('button', { name: 'Take back' }).click();
+  await waitForMoves(2);
+  check(true, 'Take back undoes the last move and the computer’s reply');
+  await page.getByRole('button', { name: 'Two players', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Start new game' }).click();
+  await waitForMoves(0);
+  check(true, 'switching to Two players asks for confirmation and starts a fresh board');
+  for (const col of [1, 2, 1, 2, 1, 2, 1]) {
+    await page.getByRole('gridcell', { name: `Row 1, column ${col}, empty`, exact: true }).click();
+    await sleep(100);
+  }
+  await page.getByText('Red wins!').first().waitFor({ timeout: 5000 });
+  check((await page.getByRole('gridcell', { name: /part of the winning four/ }).count()) === 4, 'a vertical four wins and the four discs are marked');
+  await page.screenshot({ path: `${OUT_DIR}/drop-four-win.png` });
+  check(errors.length === 0, `no console errors${errors.length ? `: ${errors.join(' | ')}` : ''}`);
+  await context.close();
+}
+
+console.log('\nDrop Four (touch)');
+{
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  const page = await context.newPage();
+  const errors = watch(page, 'drop-four-touch');
+  await page.goto(`${BASE}/games/drop-four/`, { waitUntil: 'networkidle' });
+  await page.getByRole('gridcell', { name: 'Row 1, column 4, empty', exact: true }).tap();
+  await page.getByRole('gridcell', { name: /Row 6, column 4, Red disc/ }).waitFor({ timeout: 3000 });
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  check(overflow <= 0, `tapping a column drops a disc, no overflow (${overflow}px)`);
+  check(errors.length === 0, `no console errors${errors.length ? `: ${errors.join(' | ')}` : ''}`);
+  await context.close();
+}
+
 console.log('\nDaily challenge');
 {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });

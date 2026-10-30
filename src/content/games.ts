@@ -2,6 +2,8 @@ import type { GameId } from '@/config/games';
 import { content as solitaire } from '@/games/solitaire/content';
 import { content as sudoku } from '@/games/sudoku/content';
 import { content as snake } from '@/games/snake/content';
+import { content as stackfall } from '@/games/stackfall/content';
+import { content as dropFour } from '@/games/drop-four/content';
 import { content as game2048 } from '@/games/2048/content';
 import { content as minesweeper } from '@/games/minesweeper/content';
 import { content as chess } from '@/games/chess/content';
@@ -259,4 +261,6 @@ export const GAME_CONTENT: Record<GameId, GameContent> = {
   'car-racing': carRacing,
   'mini-golf': miniGolf,
   basketball,
+  stackfall,
+  'drop-four': dropFour,
 };
