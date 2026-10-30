@@ -161,7 +161,7 @@ describe('per-game data storage', () => {
     expect(() => gameDataKey('chess', 'Bad Name')).toThrow();
     const broken = createGameStorage('chess', new ThrowingStore());
     expect(broken.write('stats', { wins: 1 })).toBe(false);
-    expect(broken.read('stats', (v): v is unknown => true)).toBeNull();
+    expect(broken.read('stats', (value): value is unknown => value !== undefined)).toBeNull();
     expect(() => broken.remove('stats')).not.toThrow();
     const none = createGameStorage('chess', null);
     expect(none.write('stats', 1)).toBe(false);
