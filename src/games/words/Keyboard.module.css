@@ -1,0 +1,120 @@
+.keyboard {
+  --key-h: clamp(44px, 6.2vh, 56px);
+  --key-gap: clamp(4px, 1.2vw, 6px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--key-gap);
+  width: 100%;
+  max-width: 500px;
+  margin-inline: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.compact {
+  --key-h: clamp(40px, 5.4vh, 48px);
+}
+
+.row {
+  display: flex;
+  gap: var(--key-gap);
+  justify-content: center;
+}
+
+.spacer {
+  flex: 0.5 1 0;
+}
+
+.key {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: var(--key-h);
+  padding: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-3);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: clamp(0.95rem, 0.8rem + 0.6vw, 1.15rem);
+  font-weight: 750;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 120ms var(--ease), transform 80ms var(--ease);
+}
+
+@media (hover: hover) {
+  .key:hover:not(:disabled) {
+    border-color: var(--accent, var(--color-cyan));
+  }
+}
+
+.key:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.key:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.key:focus-visible {
+  outline: 3px solid var(--accent, var(--color-cyan));
+  outline-offset: 2px;
+}
+
+.wide {
+  flex: 1.55 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.72rem, 0.62rem + 0.5vw, 0.9rem);
+  letter-spacing: 0.02em;
+}
+
+.key[data-state='correct'] {
+  background: var(--wk-correct, #1f9d55);
+  border-color: var(--wk-correct, #1f9d55);
+  color: #fff;
+}
+
+.key[data-state='present'] {
+  background: var(--wk-present, #d4a017);
+  border-color: var(--wk-present, #d4a017);
+  color: #1a1300;
+}
+
+.key[data-state='absent'] {
+  background: var(--color-bg);
+  border-color: var(--color-border);
+  color: var(--color-text-subtle);
+}
+
+.key[data-state='correct']::after,
+.key[data-state='present']::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  transform: translateX(-50%);
+  background: currentColor;
+}
+
+.key[data-state='correct']::after {
+  width: 40%;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.key[data-state='present']::after {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.key[data-state='absent'] {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}

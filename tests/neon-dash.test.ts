@@ -23,10 +23,6 @@ const none = makeInput(ACTIONS);
 const press = makeInput(ACTIONS, { jump: { pressed: true, held: true } });
 const hold = makeInput(ACTIONS, { jump: { held: true } });
 
-/**
- * A simple "good player": does a full jump timed so the jump is centred over
- * the next spike, block or pit, and never jumps when a drone is coming.
- */
 function botInput(sim: NeonDashSimulation, holding: { value: boolean }) {
   const T = airTime(sim.physics);
   const front = sim.scroll + PLAYER_X + PLAYER_SIZE;
@@ -80,7 +76,6 @@ describe('Neon Dash course generator', () => {
           expect(gapAfter).toBeGreaterThanOrEqual(gapSeconds(p, tierAt(obstacle.x)).min * v - 1e-6);
           if (obstacle.kind === 'pit') {
             expect(obstacle.w).toBeLessThanOrEqual(Math.max(76, MAX_PIT_SECONDS[2] * v) + 1e-6);
-            // A full jump covers far more than the widest pit.
             expect(airTime(p) * v).toBeGreaterThan(obstacle.w * 1.5);
           }
           if (obstacle.kind === 'block') expect(obstacle.h).toBeLessThan(jumpApex(p) - 40);
@@ -130,7 +125,6 @@ describe('Neon Dash physics', () => {
   it('remembers a jump pressed just before landing (jump buffer)', () => {
     const sim = new NeonDashSimulation({ seed: 1, modifier: null });
     sim.update(STEP, press);
-    // Full jump, then press again while falling just above the ground.
     let pressedEarly = false;
     for (let i = 0; i < 200; i++) {
       if (!pressedEarly) {
@@ -170,7 +164,6 @@ describe('Neon Dash physics', () => {
     for (let i = 0; i < 120 * 30 && !sim.outcome; i++) sim.update(STEP, none);
     expect(sim.outcome).toBe('lost');
     expect(sim.drainCues()).toContain('gameOver');
-    // Once over, further updates do nothing.
     const score = sim.score;
     sim.update(STEP, press);
     expect(sim.score).toBe(score);
@@ -186,7 +179,6 @@ describe('Neon Dash playability', () => {
       const holding = { value: false };
       for (let i = 0; i < 120 * 90 && !sim.outcome; i++) sim.update(STEP, botInput(sim, holding));
       if (!sim.outcome && !sim.dying) survived++;
-      // Entity lists stay bounded.
       expect(sim.obstacles.length).toBeLessThan(20);
       expect(sim.shards.length).toBeLessThan(30);
     }

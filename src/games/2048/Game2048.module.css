@@ -1,0 +1,211 @@
+.wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.board {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 34rem, calc(var(--stage-max-h, 100vh) - 2rem));
+  aspect-ratio: 1;
+  container-type: inline-size;
+  border: 1px solid color-mix(in srgb, var(--accent, #ffd23f) 30%, transparent);
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 210, 63, 0.07), transparent 60%),
+    #0b1030;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: grab;
+}
+
+.board:focus {
+  outline: none;
+}
+
+.board:focus-visible {
+  outline: 3px solid var(--accent, #ffd23f);
+  outline-offset: 4px;
+}
+
+.layer {
+  --gap: 2.6cqi;
+  --cell: calc((100cqi - 5 * var(--gap)) / 4);
+  --radius: 2cqi;
+  position: absolute;
+  inset: 0;
+}
+
+.cell,
+.tile {
+  position: absolute;
+  left: var(--gap);
+  top: var(--gap);
+  width: var(--cell);
+  height: var(--cell);
+  transform: translate(calc(var(--c) * (var(--cell) + var(--gap))), calc(var(--r) * (var(--cell) + var(--gap))));
+}
+
+.cell {
+  border-radius: var(--radius);
+  background: rgba(148, 163, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 255, 0.06);
+}
+
+.tile {
+  z-index: 2;
+  transition: transform 110ms ease-out;
+}
+
+.tile[data-removed] {
+  z-index: 1;
+}
+
+.face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius);
+  background: #1f2650;
+  color: #e9ecff;
+  font-family: var(--font-sans);
+  font-weight: 850;
+  font-size: 11cqi;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 -0.6cqi 0 rgba(0, 0, 0, 0.22);
+}
+
+.tile[data-len='2'] .face {
+  font-size: 10cqi;
+}
+.tile[data-len='3'] .face {
+  font-size: 8.4cqi;
+}
+.tile[data-len='4'] .face {
+  font-size: 6.6cqi;
+}
+.tile[data-len='5'] .face {
+  font-size: 5.3cqi;
+}
+.tile[data-len='6'] .face {
+  font-size: 4.4cqi;
+}
+
+.tile[data-v='2'] .face {
+  background: #222a58;
+  color: #e9ecff;
+}
+.tile[data-v='4'] .face {
+  background: #313a7a;
+  color: #f2f4ff;
+}
+.tile[data-v='8'] .face {
+  background: #0e6b88;
+  color: #ffffff;
+}
+.tile[data-v='16'] .face {
+  background: #0b86a8;
+  color: #ffffff;
+}
+.tile[data-v='32'] .face {
+  background: #6a4bd6;
+  color: #ffffff;
+}
+.tile[data-v='64'] .face {
+  background: #9b3bcc;
+  color: #ffffff;
+}
+.tile[data-v='128'] .face {
+  background: #c8389f;
+  color: #ffffff;
+  box-shadow: 0 0 2.4cqi rgba(255, 79, 216, 0.35);
+}
+.tile[data-v='256'] .face {
+  background: #d93d63;
+  color: #ffffff;
+  box-shadow: 0 0 2.6cqi rgba(255, 77, 109, 0.4);
+}
+.tile[data-v='512'] .face {
+  background: #f2783a;
+  color: #1c0b00;
+  box-shadow: 0 0 2.8cqi rgba(255, 138, 61, 0.45);
+}
+.tile[data-v='1024'] .face {
+  background: #f7b733;
+  color: #1c1100;
+  box-shadow: 0 0 3cqi rgba(247, 183, 51, 0.5);
+}
+.tile[data-v='2048'] .face {
+  background: #ffd23f;
+  color: #1a1300;
+  box-shadow:
+    0 0 0 0.5cqi #fff1b3 inset,
+    0 0 4cqi rgba(255, 210, 63, 0.7);
+}
+.tile[data-v='4096'] .face {
+  background: #4dffb5;
+  color: #00261a;
+  box-shadow: 0 0 4cqi rgba(77, 255, 181, 0.6);
+}
+.tile[data-v='8192'] .face,
+.tile[data-v='max'] .face {
+  background: #38e8ff;
+  color: #04121c;
+  box-shadow: 0 0 4cqi rgba(56, 232, 255, 0.6);
+}
+
+.tile[data-anim='new'] .face {
+  animation: appear 150ms ease-out 90ms backwards;
+}
+
+.tile[data-anim='merge'] .face {
+  animation: pop 190ms ease-out 90ms backwards;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  10% {
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.board[data-over] .layer {
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile {
+    transition: none;
+  }
+  .tile[data-anim] .face {
+    animation: none;
+  }
+}

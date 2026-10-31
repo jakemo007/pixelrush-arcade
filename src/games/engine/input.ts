@@ -1,14 +1,3 @@
-/**
- * Collects keyboard and pointer input between simulation steps.
- *
- * DOM events arrive at arbitrary times; the simulation runs on a fixed step.
- * Edges ("pressed"/"released") are latched here until the next snapshot so a
- * quick tap between two steps is never lost, and auto-repeat keydown events
- * are ignored so holding a key cannot re-trigger an action.
- *
- * This class has no DOM dependency, so it is unit tested directly.
- */
-
 import type { ActionState, InputSnapshot, PointerSnapshot } from './types';
 
 export class InputManager<A extends string> {
@@ -47,7 +36,6 @@ export class InputManager<A extends string> {
     return this.bindings[action].some((code) => this.heldCodes.has(code));
   }
 
-  /** Returns true when the key belongs to this game (caller should preventDefault). */
   keyDown(code: string, repeat: boolean): boolean {
     const actions = this.codeToActions.get(code);
     if (!actions) return false;
@@ -93,7 +81,6 @@ export class InputManager<A extends string> {
     if (this.activePointers.size === 0 && this.pointer.down) {
       this.pointer.down = false;
       this.pointer.released = true;
-      // Touch has no hover state: once the finger lifts, the pointer is gone.
       if (isTouch) this.pointer.inside = false;
     }
   }
@@ -102,7 +89,6 @@ export class InputManager<A extends string> {
     if (!this.pointer.down) this.pointer.inside = false;
   }
 
-  /** Releases everything (used on pause, blur and restart). */
   releaseAll(): void {
     for (const code of [...this.heldCodes]) this.keyUp(code);
     if (this.pointer.down) this.pointer.released = true;
@@ -111,7 +97,6 @@ export class InputManager<A extends string> {
     this.pointer.inside = false;
   }
 
-  /** Returns the current state and clears the latched edges. */
   snapshot(): InputSnapshot<A> {
     const actions = {} as Record<A, ActionState>;
     for (const a of this.actions) {
@@ -127,7 +112,6 @@ export class InputManager<A extends string> {
   }
 }
 
-/** An all-released snapshot, useful for tests and attract screens. */
 export function emptyInput<A extends string>(actions: readonly A[]): InputSnapshot<A> {
   const record = {} as Record<A, ActionState>;
   for (const a of actions) record[a] = { held: false, pressed: false, released: false };

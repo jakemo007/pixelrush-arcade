@@ -1,0 +1,227 @@
+.root {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  padding-block: var(--space-1);
+}
+
+@media (min-width: 860px) {
+  .root {
+    grid-template-columns: auto minmax(220px, 280px);
+    justify-content: center;
+    align-items: start;
+    gap: var(--space-6);
+  }
+}
+
+.boardCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: min(100%, 620px, calc(var(--stage-max-h) - 90px));
+  min-width: min(100%, 300px);
+}
+
+@media (min-width: 860px) {
+  .boardCol {
+    width: min(620px, calc(var(--stage-max-h) - 60px), calc(100vw - 420px));
+  }
+}
+
+.theme {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.theme strong {
+  color: var(--color-text);
+}
+
+.boardWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 2px solid color-mix(in srgb, var(--accent) 45%, var(--color-border-strong));
+  border-radius: var(--radius-md);
+  background: #0b0f2b;
+  overflow: hidden;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.overlay line {
+  stroke-linecap: round;
+  stroke-width: 0.78;
+}
+
+.found {
+  opacity: 0.42;
+}
+
+.preview {
+  opacity: 0.38;
+}
+
+.flash {
+  opacity: 0.5;
+  animation: fade-out 450ms ease-out both;
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: repeat(var(--n), 1fr);
+  container-type: inline-size;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(var(--n), 1fr);
+  min-height: 0;
+}
+
+.cell {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: calc(100cqi / var(--n) * 0.56);
+  font-weight: 700;
+  line-height: 1;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cell[data-found] {
+  font-weight: 850;
+  color: #fff;
+}
+
+.cell[data-active] {
+  color: #fff;
+  font-weight: 850;
+}
+
+.cell[data-anchor] {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  border-radius: 50%;
+}
+
+.cell:focus-visible {
+  box-shadow: inset 0 0 0 2px #fff;
+}
+
+.listCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 620px;
+}
+
+.progress {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.progress strong {
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+
+.words {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.5rem), 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 860px) {
+  .words {
+    grid-template-columns: 1fr;
+  }
+}
+
+.words li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 34px;
+  padding: 2px var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  font-size: 0.9rem;
+}
+
+.words li[data-found] {
+  border-color: color-mix(in srgb, var(--chip) 55%, transparent);
+  background: color-mix(in srgb, var(--chip) 14%, var(--color-surface));
+  color: var(--color-text-muted);
+}
+
+.words li[data-found] .word {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--chip);
+}
+
+.mark {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 50%;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.words li[data-found] .mark {
+  border-color: var(--chip);
+  background: var(--chip);
+  color: #04121c;
+  font-weight: 900;
+}
+
+.help {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-text-subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash {
+    animation: none;
+  }
+}

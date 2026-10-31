@@ -1,23 +1,15 @@
 'use client';
 
-/**
- * The interactive game widget: canvas, HUD, accessible overlays and
- * daily-challenge handling. Game rules live in src/games/; this component
- * only wires them to React state, storage and the DOM.
- *
- * Daily challenge mode is enabled with ?mode=daily when today's challenge
- * (UTC) features this game. Challenge runs use the day's seed and modifier
- * and are tracked separately from the standard personal best.
- */
-
 import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
-import { getGame, gamePath, type GameId } from '@/config/games';
+import { getCanvasGame, getGame, gamePath, POINTS_BEST, type GameId } from '@/config/games';
 import { mountGame, RESTART_LOCK_MS, type GameController, type HudState, type RunResult } from '@/games/engine/controller';
 import type { GameStatus } from '@/games/engine/status';
 import { getDailyChallenge, isGoalMet, type DailyChallenge } from '@/lib/daily/challenge';
 import { getDailyEntry, updateDailyEntry } from '@/lib/storage/daily-progress';
-import { loadPersonalBest, recordScore } from '@/lib/storage/high-scores';
+import { formatResult, formatValue } from '@/lib/format';
+import { getBrowserStorage } from '@/lib/storage/safe-storage';
+import { loadBest, recordBest } from '@/lib/storage/high-scores';
 import { loadSettings, saveSettings } from '@/lib/storage/settings';
 import { notifyLocalChange } from '@/lib/storage/use-local-value';
 import { randomSeed } from '@/lib/utils/random';
@@ -35,10 +27,9 @@ interface ResultView {
   challengeMet: boolean | null;
 }
 
-const fmt = (n: number) => n.toLocaleString('en-US');
-
 export function GameShell({ gameId }: { gameId: GameId }) {
-  const game = getGame(gameId);
+  const game = getCanvasGame(gameId);
+  const bestConfig = game.best ?? POINTS_BEST;
   const hintId = useId();
   const rootRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -92,7 +83,11 @@ export function GameShell({ gameId }: { gameId: GameId }) {
           challengeMet: met,
         };
       } else {
-        const saved = recordScore(gameId, run.score);
+        const config = getCanvasGame(gameId).best;
+        const eligible = config !== null && (run.outcome === 'won' || (config.direction === 'higher' && !config.requiresWin));
+        const saved = eligible
+          ? recordBest(gameId, run.score, { direction: config.direction })
+          : { best: loadBest(gameId) ?? 0, isNewBest: false, persisted: getBrowserStorage() !== null };
         view = {
           score: run.score,
           best: saved.best,
@@ -106,8 +101,9 @@ export function GameShell({ gameId }: { gameId: GameId }) {
       setBest(view.best);
       setResult(view);
       const headline = view.won ? 'You win!' : 'Game over.';
+      const config = active ? POINTS_BEST : (getCanvasGame(gameId).best ?? POINTS_BEST);
       announce(
-        `${headline} Score ${fmt(view.score)}.${view.isNewBest ? ' New personal best!' : ''}${
+        `${headline} ${config.label} ${formatResult(view.score, config)}.${view.isNewBest ? ' New personal best!' : ''}${
           view.challengeMet === true ? ' Daily challenge complete.' : ''
         } Press Enter or choose Play again.`,
       );
@@ -118,7 +114,6 @@ export function GameShell({ gameId }: { gameId: GameId }) {
       previousStatus = status;
       setPhase(status);
       if (status === 'playing') {
-        // Bring the whole play area into view (it is sized to fit the viewport).
         const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
         rootRef.current?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
       }
@@ -141,7 +136,6 @@ export function GameShell({ gameId }: { gameId: GameId }) {
         const stage = stageRef.current;
         if (cancelled || !canvas || !root || !stage) return;
 
-        // Browser-only state is read here, after hydration, never during render.
         const wantsDaily = new URLSearchParams(window.location.search).get('mode') === 'daily';
         const today = getDailyChallenge(new Date());
         active = wantsDaily && today.gameId === gameId ? today : null;
@@ -166,7 +160,7 @@ export function GameShell({ gameId }: { gameId: GameId }) {
         setChallenge(active);
         setOtherChallenge(wantsDaily && !active ? today : null);
         setMuted(settings.muted);
-        setBest(active ? (getDailyEntry(active.dateKey)?.best ?? 0) : loadPersonalBest(gameId));
+        setBest(active ? (getDailyEntry(active.dateKey)?.best ?? 0) : (loadBest(gameId) ?? 0));
         setPhase('ready');
       })
       .catch(() => {
@@ -184,7 +178,6 @@ export function GameShell({ gameId }: { gameId: GameId }) {
   const resume = () => controllerRef.current?.resume();
   const pause = () => controllerRef.current?.pause();
   const restart = () => {
-    // Ignore taps that land on the button in the instant the run ends.
     if (phase === 'over' && performance.now() - overAtRef.current < RESTART_LOCK_MS) return;
     controllerRef.current?.restart();
   };
@@ -196,9 +189,13 @@ export function GameShell({ gameId }: { gameId: GameId }) {
   };
 
   const score = hud?.score ?? 0;
-  const liveBest = Math.max(best, phase === 'playing' || phase === 'paused' ? score : 0);
-  const beatingBest = best > 0 && score > best && (phase === 'playing' || phase === 'paused');
+  const config = challenge ? POINTS_BEST : bestConfig;
+  const higherIsBetter = config.direction === 'higher';
+  const running = phase === 'playing' || phase === 'paused';
+  const liveBest = higherIsBetter ? Math.max(best, running ? score : 0) : best;
+  const beatingBest = higherIsBetter && best > 0 && score > best && running;
   const bestLabel = challenge ? 'Today' : 'Best';
+  const show = (n: number) => formatValue(n, config.format);
 
   return (
     <section
@@ -229,12 +226,12 @@ export function GameShell({ gameId }: { gameId: GameId }) {
       <div className={styles.hud}>
         <dl className={styles.stats}>
           <div className={styles.stat}>
-            <dt>Score</dt>
-            <dd className={styles.scoreValue}>{fmt(score)}</dd>
+            <dt>{config.label}</dt>
+            <dd className={styles.scoreValue}>{show(score)}</dd>
           </div>
           <div className={`${styles.stat} ${beatingBest ? styles.newBest : ''}`}>
             <dt>{bestLabel}</dt>
-            <dd>{fmt(liveBest)}</dd>
+            <dd>{liveBest > 0 || higherIsBetter ? show(liveBest) : '–'}</dd>
           </div>
           {hud?.items.map((item) => (
             <div key={item.id} className={styles.stat}>
@@ -343,15 +340,17 @@ export function GameShell({ gameId }: { gameId: GameId }) {
           <div className={`${styles.overlay} ${styles.overlayResult}`}>
             <p className={styles.overlayTitle}>{result.won ? 'Victory!' : 'Game over'}</p>
             <p className={styles.finalScore}>
-              <span className="visually-hidden">Score: </span>
-              {fmt(result.score)}
+              <span className="visually-hidden">{config.label}: </span>
+              {formatResult(result.score, config)}
             </p>
             {result.isNewBest ? (
               <p className={styles.bestBanner}>New {challenge ? 'best for today' : 'personal best'}!</p>
             ) : (
-              <p className={styles.overlayText}>
-                {challenge ? 'Best today' : 'Personal best'}: {fmt(result.best)}
-              </p>
+              (result.best > 0 || higherIsBetter) && (
+                <p className={styles.overlayText}>
+                  {challenge ? 'Best today' : 'Personal best'}: {formatResult(result.best, config)}
+                </p>
+              )
             )}
             {result.challengeMet !== null && (
               <p className={result.challengeMet ? styles.challengeDone : styles.overlayText}>

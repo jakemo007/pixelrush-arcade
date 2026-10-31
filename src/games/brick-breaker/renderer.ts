@@ -1,5 +1,3 @@
-/** Brick Breaker renderer: neon bricks, paddle and ball drawn procedurally. */
-
 import { createSprite, drawBanner, drawSprite, FONT_STACK, neonLine, PALETTE, roundRectPath, type Sprite } from '../engine/canvas';
 import { drawParticles } from '../engine/particles';
 import type { RenderEnv, Renderer } from '../engine/types';
@@ -114,7 +112,6 @@ export function createBrickBreakerRenderer({ ctx, reducedMotion }: RenderEnv): R
         const sprite = brick.flash > 0.5 ? flashBrick : brick.steel ? steel : bricksByHp.get(brick.hp) ?? bricksByHp.get(1)!;
         drawSprite(ctx, sprite, brick.x, brick.y);
         if (!brick.steel && brick.hp < brick.maxHp) {
-          // Crack marks show a damaged brick.
           ctx.strokeStyle = 'rgba(7, 10, 24, 0.7)';
           ctx.lineWidth = 1.5;
           ctx.beginPath();
@@ -142,7 +139,6 @@ export function createBrickBreakerRenderer({ ctx, reducedMotion }: RenderEnv): R
         ctx.fillText(style.label, c.x + 17, c.y + 7.5);
       }
 
-      // Paddle with a cheap two-pass glow; color shifts while widened.
       const paddleColor = sim.wideTimer > 0 ? PALETTE.cyan : PALETTE.magenta;
       ctx.globalAlpha = 0.25;
       ctx.fillStyle = paddleColor;

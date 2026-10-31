@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { getGame, gamePath, otherGames, type GameId } from '@/config/games';
+import { categoryPath, gamePath, getCategory, getGame, isChallengeGameId, relatedGames, type GameId } from '@/config/games';
 import { GAME_CONTENT } from '@/content/games';
 import { getGuide } from '@/content/guides';
 import { pageMetadata } from '@/lib/seo/metadata';
 import { AdSlot } from '../advertising/AdSlot';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
+import { DomGameShell } from './DomGameShell';
 import { GameCard } from './GameCard';
 import { GameShell } from './GameShell';
 import styles from './GamePage.module.css';
@@ -21,15 +22,11 @@ export function gameMetadata(id: GameId): Metadata {
   });
 }
 
-/**
- * Shared layout for every game page. All descriptive content is rendered on
- * the server, so it is readable and crawlable before (or without) the game
- * engine loading.
- */
 export function GamePage({ gameId }: { gameId: GameId }) {
   const game = getGame(gameId);
   const content = GAME_CONTENT[gameId];
-  const guide = getGuide(game.guideSlug);
+  const guide = game.guideSlug ? getGuide(game.guideSlug) : undefined;
+  const primaryCategory = getCategory(game.categories[0]!);
 
   return (
     <>
@@ -53,7 +50,7 @@ export function GamePage({ gameId }: { gameId: GameId }) {
           </div>
           <p className={styles.tagline}>{game.tagline}</p>
         </header>
-        <GameShell gameId={gameId} />
+        {game.engine === 'canvas' ? <GameShell gameId={gameId} /> : <DomGameShell gameId={gameId} />}
       </section>
 
       <div className={`container ${styles.content}`}>
@@ -64,6 +61,16 @@ export function GamePage({ gameId }: { gameId: GameId }) {
           ))}
           <h3 id="objective">Objective</h3>
           <p>{content.objective}</p>
+          {content.rules && content.rules.length > 0 && (
+            <>
+              <h3 id="rules">Rules</h3>
+              <ul>
+                {content.rules.map((rule) => (
+                  <li key={rule}>{rule}</li>
+                ))}
+              </ul>
+            </>
+          )}
 
           <h2 id="how-to-play">How to play</h2>
           <ol>
@@ -88,7 +95,7 @@ export function GamePage({ gameId }: { gameId: GameId }) {
                     <th scope="row">{row.action}</th>
                     <td>
                       {row.keys.length === 0 ? (
-                        <span className="muted">Sound button</span>
+                        <span className="muted">{row.keysNote ?? '–'}</span>
                       ) : (
                         row.keys.map((k, i) => (
                           <span key={k}>
@@ -112,7 +119,7 @@ export function GamePage({ gameId }: { gameId: GameId }) {
             ))}
           </ul>
 
-          <h2 id="difficulty">How the difficulty increases</h2>
+          <h2 id="difficulty">{content.difficultyTitle ?? 'How the difficulty increases'}</h2>
           <ul>
             {content.difficulty.map((s) => (
               <li key={s}>{s}</li>
@@ -171,18 +178,33 @@ export function GamePage({ gameId }: { gameId: GameId }) {
                 <dd>Free, no account needed</dd>
               </div>
               <div>
-                <dt>Scores</dt>
+                <dt>{game.best ? 'Personal bests' : 'Progress'}</dt>
                 <dd>Saved in this browser only</dd>
+              </div>
+              <div>
+                <dt>Category</dt>
+                <dd>
+                  {game.categories.map((c, i) => (
+                    <span key={c}>
+                      {i > 0 && ', '}
+                      <Link href={categoryPath(c)}>{getCategory(c).name}</Link>
+                    </span>
+                  ))}
+                </dd>
               </div>
             </dl>
           </div>
-          <div className="card">
-            <h2 className={styles.sideTitle}>Daily Challenge</h2>
-            <p className="muted small">A new goal every day at 00:00 UTC, rotating between all three games.</p>
-            <Link href="/daily-challenge/" className="btn btn-secondary btn-sm">
-              See today&apos;s challenge
-            </Link>
-          </div>
+          {isChallengeGameId(gameId) && (
+            <div className="card">
+              <h2 className={styles.sideTitle}>Daily Challenge</h2>
+              <p className="muted small">
+                A new goal every day at 00:00 UTC, rotating between Neon Dash, Brick Breaker and Space Survival.
+              </p>
+              <Link href="/daily-challenge/" className="btn btn-secondary btn-sm">
+                See today&apos;s challenge
+              </Link>
+            </div>
+          )}
         </aside>
       </div>
 
@@ -191,15 +213,20 @@ export function GamePage({ gameId }: { gameId: GameId }) {
         <section className="section" aria-labelledby="more-games">
           <div className="section-header">
             <div>
-              <h2 id="more-games">More games</h2>
+              <h2 id="more-games">You might also like</h2>
               <p>All free, all original, all playable in your browser.</p>
             </div>
-            <Link href="/games/" className="btn btn-ghost">
-              All games →
-            </Link>
+            <div className="btn-row">
+              <Link href={categoryPath(primaryCategory.id)} className="btn btn-ghost">
+                More {primaryCategory.name.toLowerCase().replace(/ games$/, '')} games →
+              </Link>
+              <Link href="/games/" className="btn btn-ghost">
+                All games →
+              </Link>
+            </div>
           </div>
           <div className="grid-cards">
-            {otherGames(gameId).map((g) => (
+            {relatedGames(gameId, 6).map((g) => (
               <GameCard key={g.id} game={g} />
             ))}
           </div>

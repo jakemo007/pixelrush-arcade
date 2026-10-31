@@ -1,13 +1,3 @@
-/**
- * Connects a GameDefinition to a real canvas: owns the loop, DOM input
- * listeners, resize handling, audio and the ready/playing/paused/over status.
- *
- * Browser-only. Created by the React GameShell inside useEffect and torn down
- * with destroy(), which removes every listener, observer and animation frame
- * so remounting (React Strict Mode, client navigation) never leaves a stale
- * loop running.
- */
-
 import type { RunOptions } from '../modifiers';
 import { SoundBoard } from './audio';
 import { InputManager } from './input';
@@ -37,11 +27,8 @@ export interface ControllerCallbacks {
 
 export interface MountOptions {
   canvas: HTMLCanvasElement;
-  /** The whole game widget (HUD + stage); focus leaving it pauses the game. */
   root: HTMLElement;
-  /** Focusable element wrapping the canvas; receives focus while playing. */
   stage: HTMLElement;
-  /** Called for every new run (standard runs get a fresh seed each time). */
   getRunOptions(): RunOptions;
   muted: boolean;
   callbacks: ControllerCallbacks;
@@ -57,7 +44,6 @@ export interface GameController {
   destroy(): void;
 }
 
-/** After game over, keyboard restarts are ignored briefly so a held/mashed key can't skip the results. */
 export const RESTART_LOCK_MS = 600;
 const START_KEYS = new Set(['Space', 'Enter', 'NumpadEnter']);
 const PAUSE_KEYS = new Set(['KeyP', 'Escape']);
@@ -148,8 +134,6 @@ export function mountGame(def: AnyGameDefinition, options: MountOptions): GameCo
     if (document.activeElement !== stage) stage.focus({ preventScroll: true });
   }
 
-  // --- public actions -------------------------------------------------------
-
   function start(): void {
     if (status !== 'ready') return;
     sound.unlock();
@@ -188,18 +172,10 @@ export function mountGame(def: AnyGameDefinition, options: MountOptions): GameCo
     loop.start();
   }
 
-  // --- DOM wiring -----------------------------------------------------------
-
-  /**
-   * While playing, keys typed on the page body or inside the widget control
-   * the game. In menus (ready/paused/over) only focus inside the widget
-   * counts, so pressing Space to scroll the page never starts a game.
-   */
   function ownsKeyEvent(target: EventTarget | null, allowBody: boolean): boolean {
     if (!(target instanceof Element)) return allowBody;
     if (target === document.body || target === document.documentElement) return allowBody;
     if (!root.contains(target)) return false;
-    // Let real buttons and links inside the widget handle their own keys.
     return target === stage || !target.closest(INTERACTIVE);
   }
 
@@ -237,7 +213,6 @@ export function mountGame(def: AnyGameDefinition, options: MountOptions): GameCo
   }
 
   function onKeyUp(e: KeyboardEvent): void {
-    // Always process releases so a key can never get "stuck" held.
     if (input.keyUp(e.code) && status === 'playing') e.preventDefault();
   }
 
@@ -256,7 +231,6 @@ export function mountGame(def: AnyGameDefinition, options: MountOptions): GameCo
     try {
       canvas.setPointerCapture(e.pointerId);
     } catch {
-      // Pointer capture is optional.
     }
     const p = toLogical(e);
     input.pointerDown(e.pointerId, p.x, p.y);
@@ -285,7 +259,6 @@ export function mountGame(def: AnyGameDefinition, options: MountOptions): GameCo
 
   function onFocusOut(e: FocusEvent): void {
     const next = e.relatedTarget;
-    // Pause when keyboard focus moves to something outside the game (e.g. Tab to a link).
     if (status === 'playing' && next instanceof Node && !root.contains(next)) pause();
   }
 

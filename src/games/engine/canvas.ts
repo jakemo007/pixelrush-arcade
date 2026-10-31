@@ -1,14 +1,5 @@
-/**
- * Canvas drawing helpers shared by the renderers.
- *
- * Glow effects (shadowBlur) are expensive to draw every frame on mobile GPUs,
- * so glowing shapes are pre-rendered once into small offscreen "sprites" and
- * then stamped with drawImage, which is cheap.
- */
-
 export const FONT_STACK = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
-/** Shared neon palette for in-game art. */
 export const PALETTE = {
   bg: '#070a18',
   cyan: '#38e8ff',
@@ -22,12 +13,10 @@ export const PALETTE = {
   dim: '#8c96c8',
 } as const;
 
-/** Sprites are rasterized at 2x logical size so they stay crisp on high-DPI screens. */
 const SPRITE_SCALE = 2;
 
 export interface Sprite {
   canvas: HTMLCanvasElement;
-  /** Logical size of the drawn shape, excluding the glow padding. */
   width: number;
   height: number;
   pad: number;
@@ -51,7 +40,6 @@ export function createSprite(
   return { canvas, width, height, pad };
 }
 
-/** Draws a sprite with its top-left (excluding glow) at x, y. */
 export function drawSprite(ctx: CanvasRenderingContext2D, sprite: Sprite, x: number, y: number, w = sprite.width, h = sprite.height): void {
   const sx = w / sprite.width;
   const sy = h / sprite.height;
@@ -75,7 +63,6 @@ export function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: numbe
   ctx.closePath();
 }
 
-/** Draws a line twice (wide + faint, then thin + bright) for a cheap neon glow. */
 export function neonLine(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, color: string, width = 2): void {
   ctx.strokeStyle = color;
   ctx.globalAlpha = 0.25;
@@ -89,7 +76,6 @@ export function neonLine(ctx: CanvasRenderingContext2D, x1: number, y1: number, 
   ctx.stroke();
 }
 
-/** Centered banner text with a dark backing plate, used for level/wave messages. */
 export function drawBanner(ctx: CanvasRenderingContext2D, text: string, sub: string | null, cx: number, cy: number, alpha: number, color: string): void {
   if (alpha <= 0) return;
   ctx.save();

@@ -20,7 +20,6 @@ const ACTIONS: readonly BrickBreakerAction[] = ['left', 'right', 'launch'];
 const none = makeInput(ACTIONS);
 const launch = makeInput(ACTIONS, { launch: { pressed: true, held: true } });
 
-/** Pointer input that puts the paddle centre at x. */
 const pointerAt = (x: number, pressed = false) => makeInput(ACTIONS, {}, { inside: true, moved: true, x, y: 600, pressed });
 
 describe('Brick Breaker levels', () => {
@@ -54,7 +53,6 @@ describe('Brick Breaker scoring', () => {
     expect(brickPoints(3, 0)).toBe(30);
     expect(brickPoints(1, 1)).toBe(13);
     expect(brickPoints(1, 4)).toBe(20);
-    // Combo bonus is capped.
     expect(brickPoints(1, 100)).toBe(brickPoints(1, 8));
   });
 });
@@ -83,7 +81,6 @@ describe('Brick Breaker ball physics', () => {
     sim.update(STEP, launch);
     const target = sim.bricks.find((b) => b.y === Math.max(...sim.bricks.map((x) => x.y)))!;
     sim.ball = { x: target.x + target.w / 2, y: target.y + target.h + BALL_R + 2, vx: 0.001, vy: -1 };
-    // 50 ms frame: the ball moves ~19 px, more than a brick is tall.
     sim.update(0.05, none);
     expect(target.alive).toBe(false);
     expect(sim.ball.vy).toBeGreaterThan(0);
@@ -129,8 +126,6 @@ describe('Brick Breaker ball physics', () => {
   it('keeps the ball inside the play area and clears levels with a tracking bot', () => {
     for (const modifier of [null, 'fast-ball', 'narrow-paddle']) {
       const sim = new BrickBreakerSimulation({ seed: 7, modifier });
-      // The bot tracks the ball and picks a new random hit offset for each
-      // return, like a player varying their angle.
       const aim = createRng(5);
       let offset = 0;
       let lastVy = 0;
@@ -144,7 +139,6 @@ describe('Brick Breaker ball physics', () => {
         const { x, y, vx, vy } = sim.ball;
         if (!(Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(vx) && Number.isFinite(vy))) violations.push(`non-finite at step ${i}`);
         if (x < BALL_R - 1e-6 || x > BB_WIDTH - BALL_R + 1e-6 || y < BALL_R - 1e-6) violations.push(`out of bounds at step ${i}: ${x},${y}`);
-        // Never resting inside a live brick.
         for (const b of sim.bricks) {
           if (b.alive && x > b.x + 1 && x < b.x + b.w - 1 && y > b.y + 1 && y < b.y + b.h - 1) violations.push(`inside brick at step ${i}`);
         }

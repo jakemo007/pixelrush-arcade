@@ -1,35 +1,31 @@
-/**
- * Player-facing content for each game page. Every number here reflects the
- * actual game rules in src/games/ — update both together.
- */
-
 import type { GameId } from '@/config/games';
+import { content as solitaire } from '@/games/solitaire/content';
+import { content as sudoku } from '@/games/sudoku/content';
+import { content as snake } from '@/games/snake/content';
+import { content as stackfall } from '@/games/stackfall/content';
+import { content as dropFour } from '@/games/drop-four/content';
+import { content as game2048 } from '@/games/2048/content';
+import { content as minesweeper } from '@/games/minesweeper/content';
+import { content as chess } from '@/games/chess/content';
+import { content as checkers } from '@/games/checkers/content';
+import { content as spiderSolitaire } from '@/games/spider-solitaire/content';
+import { content as freecell } from '@/games/freecell/content';
+import { content as mahjongSolitaire } from '@/games/mahjong-solitaire/content';
+import { content as dailyWord } from '@/games/daily-word/content';
+import { content as crosswordMini } from '@/games/crossword-mini/content';
+import { content as wordSearch } from '@/games/word-search/content';
+import { content as bubbleShooter } from '@/games/bubble-shooter/content';
+import { content as match3 } from '@/games/match-3/content';
+import { content as typingSpeed } from '@/games/typing-speed/content';
+import { content as memoryMatch } from '@/games/memory-match/content';
+import { content as carRacing } from '@/games/car-racing/content';
+import { content as miniGolf } from '@/games/mini-golf/content';
+import { content as basketball } from '@/games/basketball/content';
+import { CANVAS_COMMON_CONTROLS, type ControlRow, type GameContent } from './types';
 
-export interface ControlRow {
-  action: string;
-  /** Key names, rendered as <kbd>. Empty means "not applicable". */
-  keys: readonly string[];
-  touch: string;
-}
+export type { ControlRow, GameContent } from './types';
 
-export interface GameContent {
-  metaTitle: string;
-  metaDescription: string;
-  intro: readonly string[];
-  objective: string;
-  howToPlay: readonly string[];
-  controls: readonly ControlRow[];
-  scoring: readonly string[];
-  difficulty: readonly string[];
-  tips: readonly { title: string; body: string }[];
-  faq: readonly { q: string; a: string }[];
-}
-
-const commonControls: readonly ControlRow[] = [
-  { action: 'Pause / resume', keys: ['P', 'Esc'], touch: 'Pause button above the game' },
-  { action: 'Play again after game over', keys: ['Enter', 'R'], touch: 'Play again button' },
-  { action: 'Sound on / off', keys: [], touch: 'Sound button above the game' },
-];
+const commonControls: readonly ControlRow[] = CANVAS_COMMON_CONTROLS;
 
 export const GAME_CONTENT: Record<GameId, GameContent> = {
   'neon-dash': {
@@ -245,4 +241,26 @@ export const GAME_CONTENT: Record<GameId, GameContent> = {
       { q: 'Why does my ship blink?', a: 'After a hit it is invulnerable for about a second and a half. Use that time to fly somewhere safe.' },
     ],
   },
+  solitaire,
+  sudoku,
+  snake,
+  '2048': game2048,
+  minesweeper,
+  chess,
+  checkers,
+  'spider-solitaire': spiderSolitaire,
+  freecell,
+  'mahjong-solitaire': mahjongSolitaire,
+  'daily-word': dailyWord,
+  'crossword-mini': crosswordMini,
+  'word-search': wordSearch,
+  'bubble-shooter': bubbleShooter,
+  'match-3': match3,
+  'typing-speed': typingSpeed,
+  'memory-match': memoryMatch,
+  'car-racing': carRacing,
+  'mini-golf': miniGolf,
+  basketball,
+  stackfall,
+  'drop-four': dropFour,
 };

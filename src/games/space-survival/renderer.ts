@@ -1,5 +1,3 @@
-/** Space Survival renderer: parallax starfield, neon ship and geometric enemies. */
-
 import { createSprite, drawBanner, drawSprite, FONT_STACK, PALETTE, type Sprite } from '../engine/canvas';
 import { drawParticles } from '../engine/particles';
 import type { RenderEnv, Renderer } from '../engine/types';
@@ -173,7 +171,6 @@ export function createSpaceSurvivalRenderer({ ctx, reducedMotion }: RenderEnv): 
 
       for (const e of sim.enemies) {
         if (e.kind === 'charger' && e.state === 'aim') {
-          // Telegraph: the charger shows where it will dash.
           ctx.globalAlpha = 0.25 + 0.35 * Math.abs(Math.sin(e.stateTimer * 18));
           ctx.strokeStyle = PALETTE.orange;
           ctx.setLineDash([6, 8]);

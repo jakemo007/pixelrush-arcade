@@ -1,0 +1,29 @@
+.catalogue {
+  padding-top: var(--space-6);
+}
+
+.header {
+  margin-bottom: var(--space-5);
+}
+
+.header :global(.lead) {
+  margin-bottom: 0;
+}
+
+.toolbar {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+@media (max-width: 559px) {
+  .toolbar {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+}

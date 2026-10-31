@@ -1,8 +1,3 @@
-/**
- * Neon Dash renderer: procedural synth-city art drawn on a 2D canvas.
- * Reads simulation state only; all cosmetic randomness uses its own RNG.
- */
-
 import { createSprite, drawSprite, neonLine, PALETTE, roundRectPath, type Sprite } from '../engine/canvas';
 import { drawParticles } from '../engine/particles';
 import type { RenderEnv, Renderer } from '../engine/types';
@@ -29,7 +24,6 @@ function makeSky(): Sprite {
     }
     ctx.globalAlpha = 1;
 
-    // Striped neon sun.
     const cx = ND_WIDTH * 0.68;
     const cy = GROUND_Y - 70;
     const r = 120;
@@ -62,7 +56,7 @@ function makeSkyline(seed: number, minH: number, maxH: number, body: string, win
       const top = GROUND_Y - h;
       ctx.fillStyle = body;
       ctx.fillRect(x, top, w, h);
-      if (rng() < 0.3) ctx.fillRect(x + w * 0.4, top - 18, 3, 18); // antenna
+      if (rng() < 0.3) ctx.fillRect(x + w * 0.4, top - 18, 3, 18);
       ctx.fillStyle = windows;
       for (let wy = top + 10; wy < GROUND_Y - 8; wy += 14) {
         for (let wx = x + 6; wx < x + w - 8; wx += 12) {
@@ -199,7 +193,6 @@ export function createNeonDashRenderer({ ctx, reducedMotion }: RenderEnv): Rende
     ctx.fillStyle = floor;
     ctx.fillRect(0, GROUND_Y, ND_WIDTH, ND_HEIGHT - GROUND_Y);
 
-    // Perspective grid lines scrolling with the world.
     ctx.strokeStyle = 'rgba(255, 79, 216, 0.28)';
     ctx.lineWidth = 1;
     const spacing = 80;
@@ -216,7 +209,6 @@ export function createNeonDashRenderer({ ctx, reducedMotion }: RenderEnv): Rende
     }
     ctx.stroke();
 
-    // Pits cut through the floor; the ground line is drawn between them.
     let segmentStart = 0;
     for (const o of sim.obstacles) {
       if (o.kind !== 'pit') continue;
@@ -275,7 +267,6 @@ export function createNeonDashRenderer({ ctx, reducedMotion }: RenderEnv): Rende
         drawSprite(ctx, shard, x - w / 2, s.y - 13 + Math.sin(sim.time * 4 + s.phase) * 3, w, 26);
       }
 
-      // Motion trail (cosmetic history of recent heights).
       if (!sim.dying) {
         trail.unshift(sim.playerY);
         if (trail.length > 6) trail.length = 6;
@@ -304,7 +295,6 @@ export function createNeonDashRenderer({ ctx, reducedMotion }: RenderEnv): Rende
       drawParticles(ctx, sim.particles);
       ctx.restore();
 
-      // Speed streaks once the run is fast.
       if (!reducedMotion && sim.speed > 600 && !sim.dying) {
         ctx.fillStyle = 'rgba(238, 242, 255, 0.18)';
         const rng = createRng(Math.floor(sim.time * 20));

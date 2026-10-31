@@ -1,6 +1,5 @@
 import { ImageResponse } from 'next/og';
 
-/** 180x180 home-screen icon for iOS, generated at build time as /apple-touch-icon.png. */
 export const dynamic = 'force-static';
 
 export function GET() {

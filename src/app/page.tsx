@@ -1,9 +1,13 @@
 import Link from 'next/link';
+import { categorySummaries, listNames, searchIndexFor } from '@/components/catalogue/catalogue-data';
+import { CatalogueProvider, CatalogueResults, CatalogueSearch, HideWhileSearching } from '@/components/catalogue/CatalogueFilter';
+import { CategoryTiles } from '@/components/catalogue/CategoryTiles';
+import { GameGrid } from '@/components/catalogue/GameGrid';
+import { sortByRecentlyAdded } from '@/components/catalogue/search';
 import { DailyChallengeCard } from '@/components/daily/DailyChallengeCard';
-import { GameArt } from '@/components/games/GameArt';
 import { GameCard } from '@/components/games/GameCard';
 import { JsonLd } from '@/components/ui/JsonLd';
-import { GAMES, gamePath, getGame } from '@/config/games';
+import { CATEGORIES, CHALLENGE_GAME_IDS, GAMES, getGame } from '@/config/games';
 import { siteConfig } from '@/config/site';
 import { GUIDES } from '@/content/guides';
 import { pageMetadata } from '@/lib/seo/metadata';
@@ -17,7 +21,9 @@ export const metadata = pageMetadata({
   absoluteTitle: true,
 });
 
-const FEATURED = getGame('neon-dash');
+const FEATURED = GAMES.filter((g) => g.featured);
+const RECENT = sortByRecentlyAdded(GAMES).slice(0, 4);
+const CHALLENGE_NAMES = listNames(CHALLENGE_GAME_IDS.map((id) => getGame(id).name));
 
 const FEATURES = [
   {
@@ -26,19 +32,19 @@ const FEATURES = [
     icon: 'bolt',
   },
   {
+    title: 'Something for every mood',
+    body: `${GAMES.length} games in ${CATEGORIES.length} categories, from two-minute arcade runs to a slow game of chess or a quiet round of solitaire.`,
+    icon: 'grid',
+  },
+  {
     title: 'Made for every screen',
     body: 'Keyboard, mouse and touch controls on every game, with layouts that fit phones, tablets and desktops.',
     icon: 'devices',
   },
   {
     title: 'Your best, remembered',
-    body: 'Personal bests are saved in your own browser, so you can come back and try to beat yourself. No account needed.',
+    body: 'Best scores and times are saved in your own browser, for each game and difficulty, so you can come back and beat yourself. No account needed.',
     icon: 'trophy',
-  },
-  {
-    title: 'A new challenge daily',
-    body: 'Every day at 00:00 UTC a new goal appears for one of the games, with the same course or waves for everyone.',
-    icon: 'calendar',
   },
 ] as const;
 
@@ -49,6 +55,15 @@ function FeatureIcon({ name }: { name: (typeof FEATURES)[number]['icon'] }) {
       return (
         <svg {...common}>
           <path d="M13 2 4 14h7l-1 8 9-12h-7z" />
+        </svg>
+      );
+    case 'grid':
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="7.5" height="7.5" rx="1.8" />
+          <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.8" />
+          <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.8" />
+          <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.8" />
         </svg>
       );
     case 'devices':
@@ -66,18 +81,11 @@ function FeatureIcon({ name }: { name: (typeof FEATURES)[number]['icon'] }) {
           <path d="M16 6h3a3 3 0 0 1-3 4M8 6H5a3 3 0 0 0 3 4M12 13v4M8 21h8M9 17h6" />
         </svg>
       );
-    case 'calendar':
-      return (
-        <svg {...common}>
-          <rect x="3" y="5" width="18" height="16" rx="2" />
-          <path d="M3 10h18M8 3v4M16 3v4" />
-          <path d="m9 15 2 2 4-4" />
-        </svg>
-      );
   }
 }
 
 export default function HomePage() {
+  const categories = categorySummaries();
   return (
     <>
       <JsonLd
@@ -90,69 +98,98 @@ export default function HomePage() {
         }}
       />
 
-      <section className={`container ${styles.hero}`} aria-labelledby="hero-title">
-        <div className={styles.heroCopy}>
-          <p className="eyebrow">Free browser arcade</p>
-          <h1 id="hero-title" className={styles.heroTitle}>
-            Original arcade games that start in a <span className={styles.highlight}>second</span>.
-          </h1>
-          <p className="lead">
-            Three hand-built games: an endless runner, a brick breaker and a space survival shooter. No downloads, no accounts, and
-            they play just as well on your phone.
-          </p>
-          <div className="btn-row">
-            <Link href={gamePath(FEATURED.id)} className="btn btn-primary">
-              Play {FEATURED.name}
+      <CatalogueProvider entries={searchIndexFor(GAMES)}>
+        <section className={`container ${styles.hero}`} aria-labelledby="hero-title">
+          <div className={styles.heroCopy}>
+            <p className="eyebrow">{siteConfig.name}</p>
+            <h1 id="hero-title" className={styles.heroTitle}>
+              Original browser games that start in a <span className={styles.highlight}>second</span>.
+            </h1>
+            <p className="lead">
+              {GAMES.length} free games made for this site: arcade action, card and board games, logic and word puzzles, sports and
+              racing. No downloads, no accounts, and they play just as well on your phone.
+            </p>
+            <div className={styles.heroSearch}>
+              <CatalogueSearch label="Find a game" placeholder="Try “solitaire” or “cards”" size="large" summary />
+            </div>
+            <ul className={styles.heroPoints}>
+              <li>No sign-up</li>
+              <li>Keyboard, mouse &amp; touch</li>
+              <li>Personal bests saved in your browser</li>
+            </ul>
+          </div>
+
+          <HideWhileSearching narrowOnly>
+            <section className={styles.categoryPanel} aria-labelledby="categories-title">
+              <h2 id="categories-title" className={styles.panelTitle}>
+                Browse by category
+              </h2>
+              <CategoryTiles categories={categories} allGamesCount={GAMES.length} />
+            </section>
+          </HideWhileSearching>
+        </section>
+
+        <HideWhileSearching>
+          <section className={`container section ${styles.firstSection}`} aria-labelledby="featured-title">
+            <div className="section-header">
+              <div>
+                <p className="eyebrow">Featured</p>
+                <h2 id="featured-title">Good places to start</h2>
+                <p>A few favourites from across the catalogue.</p>
+              </div>
+            </div>
+            <ul className={`grid-cards ${styles.featuredList}`}>
+              {FEATURED.map((game) => (
+                <li key={game.id}>
+                  <GameCard game={game} artId="feat" />
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="container section" aria-labelledby="recent-title">
+            <div className="section-header">
+              <div>
+                <p className="eyebrow">New</p>
+                <h2 id="recent-title">Recently added</h2>
+                <p>The newest games on {siteConfig.shortName}.</p>
+              </div>
+              <Link href="/games/" className="btn btn-ghost">
+                All games →
+              </Link>
+            </div>
+            <GameGrid games={RECENT} artId="new" />
+          </section>
+
+          <section className={`container section ${styles.dailySection}`} aria-labelledby="daily-title">
+            <div className="section-header">
+              <div>
+                <p className="eyebrow">Daily Challenge</p>
+                <h2 id="daily-title">Today&apos;s challenge</h2>
+                <p>
+                  One goal a day for one of the original arcade games ({CHALLENGE_NAMES}), the same for everyone. Resets every
+                  day at 00:00 UTC.
+                </p>
+              </div>
+            </div>
+            <DailyChallengeCard variant="compact" headingLevel="h3" />
+          </section>
+        </HideWhileSearching>
+
+        <section className={`container section ${styles.catalogue}`} aria-labelledby="games-title">
+          <div className="section-header">
+            <div>
+              <p className="eyebrow">Game catalogue</p>
+              <h2 id="games-title">All games</h2>
+              <p>Every game is free to play in your browser, with no sign-up.</p>
+            </div>
+            <Link href="/games/" className="btn btn-ghost">
+              Filter by category →
             </Link>
-            <Link href="/games/" className="btn btn-secondary">
-              Browse all games
-            </Link>
           </div>
-          <ul className={styles.heroPoints}>
-            <li>No sign-up</li>
-            <li>Keyboard, mouse &amp; touch</li>
-            <li>Personal bests saved in your browser</li>
-          </ul>
-        </div>
-
-        <Link href={gamePath(FEATURED.id)} className={styles.spotlight} aria-label={`Featured game: play ${FEATURED.name}`}>
-          <GameArt gameId={FEATURED.id} idSuffix="hero" className={styles.spotlightArt} />
-          <span className={styles.spotlightCaption}>
-            <span className={styles.spotlightBadge}>Featured</span>
-            <span className={styles.spotlightName}>{FEATURED.name}</span>
-            <span className={styles.spotlightTag}>{FEATURED.tagline}</span>
-          </span>
-        </Link>
-      </section>
-
-      <section className={`container section ${styles.dailySection}`} aria-labelledby="daily-title">
-        <div className="section-header">
-          <div>
-            <p className="eyebrow">Daily Challenge</p>
-            <h2 id="daily-title">Today&apos;s challenge</h2>
-            <p>One goal, one game, the same for everyone. Resets every day at 00:00 UTC.</p>
-          </div>
-        </div>
-        <DailyChallengeCard variant="compact" headingLevel="h3" />
-      </section>
-
-      <section className="container section" aria-labelledby="games-title">
-        <div className="section-header">
-          <div>
-            <p className="eyebrow">Game catalogue</p>
-            <h2 id="games-title">Pick a game and play</h2>
-            <p>Every game is fully playable right now, free, in your browser.</p>
-          </div>
-          <Link href="/games/" className="btn btn-ghost">
-            All games →
-          </Link>
-        </div>
-        <div className="grid-cards">
-          {GAMES.map((game) => (
-            <GameCard key={game.id} game={game} />
-          ))}
-        </div>
-      </section>
+          <CatalogueResults items={GAMES.map((game) => ({ id: game.id, card: <GameCard game={game} compact artId="all" /> }))} />
+        </section>
+      </CatalogueProvider>
 
       <section className="container section" aria-labelledby="why-title">
         <div className="section-header">

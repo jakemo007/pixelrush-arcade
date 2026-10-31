@@ -1,21 +1,6 @@
 import Script from 'next/script';
 import { analyticsConfig } from '@/config/integrations';
 
-/**
- * Optional Google Analytics 4. Renders nothing unless NEXT_PUBLIC_GA_ID is a
- * valid measurement ID.
- *
- * Google consent mode defaults are set BEFORE the tag loads. The default is
- * "denied" for all storage types (configurable via
- * NEXT_PUBLIC_ANALYTICS_CONSENT_DEFAULT). With "denied", no analytics or ad
- * cookies are set until a consent management platform (CMP) updates consent
- * with gtag('consent', 'update', ...). No CMP is bundled: see
- * docs/MONETIZATION.md before enabling analytics for visitors in regions that
- * require prior consent.
- *
- * The measurement ID and consent value are validated by regex in
- * src/config/integrations.ts, so interpolating them below is safe.
- */
 export function GoogleAnalytics() {
   if (!analyticsConfig.enabled || !analyticsConfig.measurementId) return null;
   const id = analyticsConfig.measurementId;

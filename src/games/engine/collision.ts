@@ -1,5 +1,3 @@
-/** Geometry helpers shared by the games. All functions are pure. */
-
 export interface Rect {
   x: number;
   y: number;
@@ -8,10 +6,8 @@ export interface Rect {
 }
 
 export interface Contact {
-  /** Unit normal pointing from the rectangle towards the circle. */
   nx: number;
   ny: number;
-  /** Overlap distance along the normal. */
   depth: number;
 }
 
@@ -23,7 +19,6 @@ export function rectsOverlap(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
-/** Shrinks a rectangle on each side (negative values grow it). */
 export function insetRect(r: Rect, dx: number, dy: number = dx): Rect {
   return { x: r.x + dx, y: r.y + dy, w: Math.max(0, r.w - dx * 2), h: Math.max(0, r.h - dy * 2) };
 }
@@ -43,12 +38,6 @@ export function circleRectOverlap(cx: number, cy: number, r: number, rect: Rect)
   return dx * dx + dy * dy < r * r;
 }
 
-/**
- * Contact information for a circle touching a rectangle, or null.
- * If the circle's centre is inside the rectangle (deep penetration) the
- * normal points out through the nearest side, so the circle is always pushed
- * back out instead of getting stuck.
- */
 export function circleRectContact(cx: number, cy: number, r: number, rect: Rect): Contact | null {
   const px = clamp(cx, rect.x, rect.x + rect.w);
   const py = clamp(cy, rect.y, rect.y + rect.h);
@@ -73,7 +62,6 @@ export function circleRectContact(cx: number, cy: number, r: number, rect: Rect)
   return { nx: 1, ny: 0, depth: right + r };
 }
 
-/** Reflects a velocity about a unit normal. */
 export function reflect(vx: number, vy: number, nx: number, ny: number): { vx: number; vy: number } {
   const dot = vx * nx + vy * ny;
   return { vx: vx - 2 * dot * nx, vy: vy - 2 * dot * ny };

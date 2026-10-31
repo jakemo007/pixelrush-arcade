@@ -3,13 +3,10 @@ import type { GameId } from '@/config/games';
 export interface GuideMeta {
   slug: string;
   title: string;
-  /** Short label for footers and lists. */
   shortTitle: string;
-  /** The player question this guide answers (used as the intro hook). */
   question: string;
   description: string;
   gameId: GameId;
-  /** YYYY-MM-DD */
   published: string;
   updated: string;
   readingMinutes: number;

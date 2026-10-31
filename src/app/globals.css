@@ -1,11 +1,4 @@
-/* ==========================================================================
-   PixelRush Arcade design system
-   Tokens first, then base elements, then shared component classes.
-   Component-specific styles live in CSS Modules next to each component.
-   ========================================================================== */
-
 :root {
-  /* Color */
   --color-bg: #0a0d1a;
   --color-bg-deep: #06081a;
   --color-surface: #10142b;
@@ -26,7 +19,6 @@
   --color-danger: #ff6b8a;
   --color-on-accent: #04121c;
 
-  /* Typography */
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
   --font-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Mono', Menlo, Consolas, monospace;
   --text-sm: 0.875rem;
@@ -36,7 +28,6 @@
   --text-h2: clamp(1.55rem, 1.2rem + 1.4vw, 2.1rem);
   --text-h3: 1.25rem;
 
-  /* Spacing (4px scale) */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -47,7 +38,6 @@
   --space-8: 4rem;
   --space-9: 6rem;
 
-  /* Shape & depth */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
@@ -55,18 +45,14 @@
   --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.35);
   --glow-cyan: 0 0 0 1px rgba(56, 232, 255, 0.35), 0 8px 28px rgba(56, 232, 255, 0.18);
 
-  /* Layout */
   --container: 1160px;
   --gutter: clamp(1rem, 0.6rem + 1.6vw, 1.75rem);
 
-  /* Motion */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --duration: 160ms;
 
   color-scheme: dark;
 }
-
-/* --- Base ----------------------------------------------------------------- */
 
 *,
 *::before,
@@ -181,8 +167,6 @@ hr {
   background: rgba(56, 232, 255, 0.35);
 }
 
-/* --- Layout helpers -------------------------------------------------------- */
-
 .container {
   width: 100%;
   max-width: calc(var(--container) + var(--gutter) * 2);
@@ -221,8 +205,6 @@ hr {
 .stack > * + * {
   margin-top: var(--space-4);
 }
-
-/* --- Text helpers ------------------------------------------------------------ */
 
 .eyebrow {
   display: inline-block;
@@ -275,8 +257,6 @@ hr {
 .skip-link:focus {
   top: var(--space-3);
 }
-
-/* --- Buttons ----------------------------------------------------------------- */
 
 .btn {
   display: inline-flex;
@@ -347,8 +327,6 @@ hr {
   align-items: center;
 }
 
-/* --- Surfaces ---------------------------------------------------------------- */
-
 .card {
   background: linear-gradient(180deg, var(--color-surface-2), var(--color-surface));
   border: 1px solid var(--color-border);
@@ -418,8 +396,6 @@ hr {
 .operator-note strong {
   color: var(--color-warning);
 }
-
-/* --- Long-form content ------------------------------------------------------------ */
 
 .prose {
   max-width: 72ch;
@@ -492,7 +468,6 @@ hr {
   margin-bottom: 0;
 }
 
-/* FAQ disclosure widgets (no JavaScript needed). */
 .faq {
   display: grid;
   gap: var(--space-3);
@@ -520,7 +495,6 @@ hr {
   color: var(--color-text-muted);
 }
 
-/* Advertising container: only rendered when ads are explicitly enabled. */
 .ad-slot {
   margin: var(--space-7) auto;
   max-width: 970px;
@@ -535,8 +509,6 @@ hr {
   color: var(--color-text-subtle);
 }
 
-/* --- Motion preferences ----------------------------------------------------------- */
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -548,7 +520,6 @@ hr {
   }
 }
 
-/* The skip link moves focus to <main>; no outline is needed on the container itself. */
 main:focus {
   outline: none;
 }

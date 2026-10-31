@@ -4,7 +4,6 @@ export const STEP = 1 / 120;
 
 const idle: ActionState = { held: false, pressed: false, released: false };
 
-/** Builds an input snapshot from simple flags. */
 export function makeInput<A extends string>(
   actions: readonly A[],
   state: Partial<Record<A, Partial<ActionState>>> = {},
@@ -18,7 +17,6 @@ export function makeInput<A extends string>(
   };
 }
 
-/** In-memory Storage double. */
 export class MemoryStore {
   readonly data = new Map<string, string>();
   getItem(key: string): string | null {
@@ -32,7 +30,6 @@ export class MemoryStore {
   }
 }
 
-/** A store whose every operation throws, like disabled storage or a full quota. */
 export class ThrowingStore {
   getItem(): string | null {
     throw new Error('SecurityError');

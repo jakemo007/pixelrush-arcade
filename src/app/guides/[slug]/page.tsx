@@ -8,7 +8,6 @@ import { GUIDE_BODIES } from '@/content/guides/bodies';
 import { pageMetadata } from '@/lib/seo/metadata';
 import styles from '../guides.module.css';
 
-// Only the guides listed in src/content/guides are built; anything else is a 404.
 export const dynamicParams = false;
 
 export function generateStaticParams() {

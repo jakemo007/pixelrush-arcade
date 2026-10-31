@@ -1,9 +1,3 @@
-/**
- * Local daily-challenge progress: best challenge score and completion per
- * UTC date. Kept in a single key and capped to the most recent days so it
- * can never grow without bound.
- */
-
 import {
   getBrowserStorage,
   isPlainObject,
@@ -30,7 +24,6 @@ function isDailyEntry(value: unknown): value is DailyEntry {
   return isPlainObject(value) && isValidScore(value.best) && typeof value.completed === 'boolean';
 }
 
-/** Accepts the stored map but silently drops any malformed entries. */
 function isDailyProgressShape(value: unknown): value is Record<string, unknown> {
   return isPlainObject(value);
 }
@@ -63,7 +56,6 @@ export function updateDailyEntry(
   };
   progress[dateKey] = next;
 
-  // Keep only the newest dates (YYYY-MM-DD sorts chronologically as text).
   const trimmed: DailyProgress = {};
   for (const date of Object.keys(progress).sort().slice(-DAILY_HISTORY_LIMIT)) {
     trimmed[date] = progress[date]!;

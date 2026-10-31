@@ -8,7 +8,6 @@ export interface Crumb {
   path: string;
 }
 
-/** Visible breadcrumb trail plus matching BreadcrumbList structured data. */
 export function Breadcrumbs({ items }: { items: Crumb[] }) {
   return (
     <>
