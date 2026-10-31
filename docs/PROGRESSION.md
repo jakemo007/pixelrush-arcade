@@ -1,6 +1,6 @@
 # Progression design: levels, stars, themes and achievements
 
-Status: Phase 1 (shared core) is built and tested. Phases 2 to 5 are planned and not started.
+Status: Phases 1 and 2 are built and tested (shared core; shell integration and Brick Breaker). Phases 3 to 5 are planned and not started.
 
 ## Goal and guardrails
 
@@ -57,7 +57,7 @@ Everything read is validated. Missing, malformed or hand-edited data falls back 
 ## Phases
 
 1. **Core (done):** `src/lib/progress/` and its tests.
-2. **Shell integration with Brick Breaker as the first game:** `RunOptions.level`, shared level select, stars on the result overlay, level generator with fairness tests, achievement notice.
+2. **Shell integration with Brick Breaker as the first game (done):** `RunOptions.level`, shared level select, stars on the result overlay, level generator with fairness tests, achievement notice. Brick Breaker numbers are in `docs/GAME_DESIGN.md`. Differences from the first plan: a run still plays levels in sequence from the chosen level (lives carry over) instead of one level per run, and themes are deferred to Phase 5 because they need renderer support.
 3. **Mini Golf, Match-3 and Bubble Shooter.**
 4. **Sudoku and Mahjong Solitaire** (DOM shell, packs and layouts).
 5. **Achievements page and theme picker,** with a list of every achievement and its progress.

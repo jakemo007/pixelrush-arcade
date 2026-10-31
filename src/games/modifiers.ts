@@ -32,4 +32,5 @@ export function getModifier(gameId: GameId, id: string | null): ModifierInfo | n
 export interface RunOptions {
   seed: number;
   modifier: string | null;
+  level?: number;
 }

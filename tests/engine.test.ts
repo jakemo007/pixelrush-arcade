@@ -14,6 +14,8 @@ describe('game status transitions', () => {
     expect(transition('playing', 'end')).toBe('over');
     expect(transition('over', 'restart')).toBe('playing');
     expect(transition('paused', 'restart')).toBe('playing');
+    expect(transition('over', 'menu')).toBe('ready');
+    expect(transition('paused', 'menu')).toBe('ready');
   });
 
   it('rejects invalid transitions', () => {
@@ -27,6 +29,8 @@ describe('game status transitions', () => {
       ['over', 'pause'],
       ['over', 'resume'],
       ['over', 'start'],
+      ['ready', 'menu'],
+      ['playing', 'menu'],
     ];
     for (const [status, event] of invalid) expect(transition(status, event)).toBeNull();
   });

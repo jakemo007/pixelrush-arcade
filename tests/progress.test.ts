@@ -16,6 +16,7 @@ import {
   highestUnlockedLevel,
   isGameProgress,
   isLevelUnlocked,
+  levelLockReason,
   isValidThresholds,
   loadProgress,
   MAX_LEVELS,
@@ -319,5 +320,30 @@ describe('themes', () => {
     expect(saveThemeId(storage, 'Bad Id')).toBe(false);
     store.setItem('pixelrush:v1:game:brick-breaker:theme', '"Bad Id"');
     expect(loadThemeId(storage)).toBeNull();
+  });
+});
+
+describe('level lock reasons', () => {
+  it('explains why a level is locked', () => {
+    const gate = { every: 3, starsPerGate: 6 };
+    const none = emptyProgress();
+    expect(levelLockReason(none, 1, 30, gate)).toBeNull();
+    expect(levelLockReason(none, 2, 30, gate)).toBe('Clear level 1 first');
+    expect(levelLockReason(none, 31, 30, gate)).toBe('Not available');
+    expect(levelLockReason(none, 0, 30, gate)).toBe('Not available');
+    let p = none;
+    for (const level of [1, 2, 3]) p = recordLevelResult(p, level, 120, HIGHER, 'higher', NOW).progress;
+    expect(levelLockReason(p, 4, 30, gate)).toBe('Needs 6 stars (you have 3)');
+    for (const level of [1, 2, 3]) p = recordLevelResult(p, level, 700, HIGHER, 'higher', NOW).progress;
+    expect(levelLockReason(p, 4, 30, gate)).toBeNull();
+    expect(levelLockReason(p, 5, 30, gate)).toBe('Clear level 4 first');
+  });
+
+  it('agrees with isLevelUnlocked', () => {
+    let p = emptyProgress();
+    for (const level of [1, 2]) p = recordLevelResult(p, level, 120, HIGHER, 'higher', NOW).progress;
+    for (let level = 0; level <= 5; level++) {
+      expect(isLevelUnlocked(p, level, 4)).toBe(levelLockReason(p, level, 4) === null);
+    }
   });
 });

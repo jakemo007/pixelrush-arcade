@@ -8,12 +8,17 @@ import type { GameStatus } from '@/games/engine/status';
 import { getDailyChallenge, isGoalMet, type DailyChallenge } from '@/lib/daily/challenge';
 import { getDailyEntry, updateDailyEntry } from '@/lib/storage/daily-progress';
 import { formatResult, formatValue } from '@/lib/format';
+import { ACHIEVEMENTS } from '@/lib/progress/definitions';
+import { loadAchievements, recordCounter, saveAchievements, type AchievementState } from '@/lib/progress/achievements';
+import { loadProgress, nextLevelToPlay, recordLevelResult, saveProgress, totalStars, type GameProgress } from '@/lib/progress/levels';
+import { createGameStorage } from '@/lib/storage/game-data';
 import { getBrowserStorage } from '@/lib/storage/safe-storage';
 import { loadBest, recordBest } from '@/lib/storage/high-scores';
 import { loadSettings, saveSettings } from '@/lib/storage/settings';
 import { notifyLocalChange } from '@/lib/storage/use-local-value';
 import { randomSeed } from '@/lib/utils/random';
 import { loadGameDefinition } from './game-loaders';
+import { LevelSelect } from './LevelSelect';
 import styles from './GameShell.module.css';
 
 type Phase = 'loading' | 'error' | GameStatus;
@@ -36,6 +41,9 @@ export function GameShell({ gameId }: { gameId: GameId }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controllerRef = useRef<GameController | null>(null);
   const overAtRef = useRef(0);
+  const selectedLevelRef = useRef(1);
+  const progressRef = useRef<GameProgress>({ levels: {} });
+  const achievementsRef = useRef<AchievementState>({ counters: {}, unlocked: {} });
 
   const [phase, setPhase] = useState<Phase>('loading');
   const [hud, setHud] = useState<HudState | null>(null);
@@ -46,6 +54,10 @@ export function GameShell({ gameId }: { gameId: GameId }) {
   const [otherChallenge, setOtherChallenge] = useState<DailyChallenge | null>(null);
   const [goalMet, setGoalMet] = useState(false);
   const [announcement, setAnnouncement] = useState('');
+  const [progress, setProgress] = useState<GameProgress>({ levels: {} });
+  const [selectedLevel, setSelectedLevel] = useState(1);
+  const [runClears, setRunClears] = useState<{ level: number; stars: number }[]>([]);
+  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -55,6 +67,8 @@ export function GameShell({ gameId }: { gameId: GameId }) {
     let active: DailyChallenge | null = null;
 
     const announce = (message: string) => setAnnouncement(message);
+    const levelsConfig = game.levels;
+    const storage = createGameStorage(gameId);
 
     const onHud = (next: HudState) => {
       setHud(next);
@@ -97,6 +111,11 @@ export function GameShell({ gameId }: { gameId: GameId }) {
           challengeMet: null,
         };
       }
+      if (levelsConfig && !active) {
+        const next = nextLevelToPlay(progressRef.current, levelsConfig.count, levelsConfig.gate);
+        selectedLevelRef.current = next;
+        setSelectedLevel(next);
+      }
       notifyLocalChange();
       setBest(view.best);
       setResult(view);
@@ -121,6 +140,7 @@ export function GameShell({ gameId }: { gameId: GameId }) {
         goalMetThisRun = false;
         setGoalMet(false);
         setResult(null);
+        setRunClears([]);
         announce(`${game.name} started.`);
       } else if (status === 'paused') {
         announce('Paused. Press P, Escape or Resume to continue.');
@@ -140,6 +160,15 @@ export function GameShell({ gameId }: { gameId: GameId }) {
         const today = getDailyChallenge(new Date());
         active = wantsDaily && today.gameId === gameId ? today : null;
         const settings = loadSettings();
+        achievementsRef.current = loadAchievements();
+        if (levelsConfig && !active) {
+          const saved = loadProgress(storage);
+          progressRef.current = saved;
+          setProgress(saved);
+          const next = nextLevelToPlay(saved, levelsConfig.count, levelsConfig.gate);
+          selectedLevelRef.current = next;
+          setSelectedLevel(next);
+        }
 
         controller = mountGame(definition, {
           canvas,
@@ -147,13 +176,39 @@ export function GameShell({ gameId }: { gameId: GameId }) {
           stage,
           muted: settings.muted,
           getRunOptions: () =>
-            active ? { seed: active.seed, modifier: active.modifier?.id ?? null } : { seed: randomSeed(), modifier: null },
+            active
+              ? { seed: active.seed, modifier: active.modifier?.id ?? null }
+              : { seed: randomSeed(), modifier: null, level: levelsConfig ? selectedLevelRef.current : undefined },
           callbacks: {
             onStatusChange,
             onHud,
             onGameOver,
             onAnnounce: announce,
             onError: () => setPhase('error'),
+            onLevelResult: (r) => {
+              if (!levelsConfig || active) return;
+              const out = recordLevelResult(progressRef.current, r.level, r.value, levelsConfig.thresholds, levelsConfig.direction, new Date().toISOString());
+              if (out.stars === 0) return;
+              if (out.improved) {
+                progressRef.current = out.progress;
+                saveProgress(storage, out.progress);
+                setProgress(out.progress);
+                notifyLocalChange();
+              }
+              setRunClears((list) => [...list, { level: r.level, stars: out.stars }]);
+              announce(`Level ${r.level} cleared with ${out.stars} ${out.stars === 1 ? 'star' : 'stars'}.`);
+            },
+            onCounter: (event) => {
+              const out = recordCounter(achievementsRef.current, ACHIEVEMENTS, event, new Date().toISOString());
+              if (out.state === achievementsRef.current) return;
+              achievementsRef.current = out.state;
+              saveAchievements(out.state);
+              if (out.unlocked.length > 0) {
+                const names = out.unlocked.map((a) => a.name).join(', ');
+                setNotice(`Achievement unlocked: ${names}`);
+                announce(`Achievement unlocked: ${names}.`);
+              }
+            },
           },
         });
         controllerRef.current = controller;
@@ -172,7 +227,13 @@ export function GameShell({ gameId }: { gameId: GameId }) {
       controller?.destroy();
       controllerRef.current = null;
     };
-  }, [gameId, game.name]);
+  }, [gameId, game.name, game.levels]);
+
+  useEffect(() => {
+    if (!notice) return;
+    const id = window.setTimeout(() => setNotice(''), 6000);
+    return () => window.clearTimeout(id);
+  }, [notice]);
 
   const start = () => controllerRef.current?.start();
   const resume = () => controllerRef.current?.resume();
@@ -181,6 +242,12 @@ export function GameShell({ gameId }: { gameId: GameId }) {
     if (phase === 'over' && performance.now() - overAtRef.current < RESTART_LOCK_MS) return;
     controllerRef.current?.restart();
   };
+  const chooseLevel = (level: number) => {
+    selectedLevelRef.current = level;
+    setSelectedLevel(level);
+    controllerRef.current?.refresh();
+  };
+  const showMenu = () => controllerRef.current?.showMenu();
   const toggleMute = () => {
     const next = !muted;
     setMuted(next);
@@ -220,6 +287,12 @@ export function GameShell({ gameId }: { gameId: GameId }) {
           Today&apos;s daily challenge is in{' '}
           <Link href={`${gamePath(otherChallenge.gameId)}?mode=daily`}>{getGame(otherChallenge.gameId).name}</Link>. This is a
           standard run.
+        </p>
+      )}
+
+      {notice && (
+        <p className={styles.achievement} role="status">
+          <span aria-hidden="true">🏆</span> {notice}
         </p>
       )}
 
@@ -291,7 +364,7 @@ export function GameShell({ gameId }: { gameId: GameId }) {
         )}
 
         {phase === 'ready' && (
-          <div className={styles.overlay}>
+          <div className={`${styles.overlay}${game.levels && !challenge ? ` ${styles.overlayLevels}` : ''}`}>
             <p className={styles.overlayTitle}>{challenge ? 'Daily Challenge' : game.name}</p>
             {challenge ? (
               <p className={styles.overlayText}>
@@ -301,6 +374,7 @@ export function GameShell({ gameId }: { gameId: GameId }) {
             ) : (
               <p className={styles.overlayText}>{game.tagline}</p>
             )}
+            {!(game.levels && !challenge) && (
             <ul className={styles.controlsList}>
               <li>
                 <span className={styles.controlsLabel}>Keyboard</span>
@@ -315,9 +389,13 @@ export function GameShell({ gameId }: { gameId: GameId }) {
                 <span>P or Esc</span>
               </li>
             </ul>
+            )}
             <button type="button" className={`btn btn-primary ${styles.bigButton}`} onClick={start}>
               <PlayIcon /> {challenge ? 'Start challenge' : 'Start game'}
             </button>
+            {game.levels && !challenge && (
+              <LevelSelect levels={game.levels} progress={progress} selected={selectedLevel} onSelect={chooseLevel} />
+            )}
           </div>
         )}
 
@@ -331,6 +409,11 @@ export function GameShell({ gameId }: { gameId: GameId }) {
               <button type="button" className="btn btn-secondary" onClick={restart}>
                 Restart
               </button>
+              {game.levels && !challenge && (
+                <button type="button" className="btn btn-secondary" onClick={showMenu}>
+                  Choose level
+                </button>
+              )}
             </div>
             <p className={styles.overlayHint}>Press P or Esc to resume.</p>
           </div>
@@ -352,6 +435,11 @@ export function GameShell({ gameId }: { gameId: GameId }) {
                 </p>
               )
             )}
+            {game.levels && !challenge && runClears.length > 0 && (
+              <p className={styles.overlayText}>
+                Levels cleared this run: {runClears.length} ({runClears.map((c) => `${c.level}: ${'★'.repeat(c.stars)}`).join(', ')}). Total stars: {totalStars(progress)}.
+              </p>
+            )}
             {result.challengeMet !== null && (
               <p className={result.challengeMet ? styles.challengeDone : styles.overlayText}>
                 {result.challengeMet ? 'Daily challenge complete ✓' : `Challenge: ${challenge?.goal.description ?? ''}`}
@@ -361,6 +449,11 @@ export function GameShell({ gameId }: { gameId: GameId }) {
               <button type="button" className={`btn btn-primary ${styles.bigButton}`} onClick={restart}>
                 <RestartIcon /> Play again
               </button>
+              {game.levels && !challenge && (
+                <button type="button" className="btn btn-secondary" onClick={showMenu}>
+                  Choose level
+                </button>
+              )}
               <Link href="/games/" className="btn btn-secondary">
                 Other games
               </Link>

@@ -107,14 +107,16 @@ export const GAME_CONTENT: Record<GameId, GameContent> = {
   'brick-breaker': {
     metaTitle: 'Brick Breaker: Free Classic Arcade Game',
     metaDescription:
-      'Play Brick Breaker free online. Aim your paddle bounces, chain combos and clear eight hand-built levels with mouse, keyboard or touch controls.',
+      'Play Brick Breaker free online. Aim your paddle bounces, chain combos and clear 30 levels, earning up to three stars on each. Mouse, keyboard or touch.',
     intro: [
       'Brick Breaker is our take on the classic paddle-and-ball arcade game. Keep the ball in play, aim each rebound off your paddle and clear every breakable brick to move on to the next wall.',
-      'There are eight hand-built levels, from a gentle warm-up to a steel-reinforced finale. The ball gets faster on each new level and tougher bricks need more than one hit.',
+      'There are 30 levels: eight hand-built walls, from a gentle warm-up to a steel-reinforced finale, followed by 22 more that grow denser with tougher bricks and more steel. The ball gets faster on each new level up to level 8, and tougher bricks need more than one hit.',
+      'Every level you clear is saved in this browser with one to three stars. Pick any level you have unlocked from the start screen, earn more stars by replaying, and unlock the next set of ten as your star total grows.',
     ],
     objective:
-      'Clear all eight levels before you run out of lives. A level is complete when every breakable brick is gone; grey steel bricks cannot be broken and do not need to be.',
+      'Clear as many levels as you can before you run out of lives, and clear level 30 to win. A level is complete when every breakable brick is gone; grey steel bricks cannot be broken and do not need to be.',
     howToPlay: [
+      'On the start screen, choose a level. Level 1 is open from the start, and each new level opens when you clear the one before it.',
       'Move the paddle with your mouse, your finger or the arrow keys.',
       'Press Space or tap the game to launch the ball.',
       'Keep the ball from falling past your paddle. Where it hits the paddle sets the angle: the center sends it straight up, the edges send it off at a sharp angle.',
@@ -132,11 +134,13 @@ export const GAME_CONTENT: Record<GameId, GameContent> = {
       'Combo bonus: each extra brick broken before the ball returns to your paddle adds 25% to that brick’s points, up to triple points.',
       'Damaging a tough brick without breaking it: +5 points.',
       'Clearing a level: 100 × the level number.',
-      'Winning the game: +250 for every life you have left.',
+      'Winning the game by clearing level 30: +250 for every life you have left.',
+      'Stars: each level you clear earns three stars if you lose no ball on it, two stars if you lose one and one star if you lose more. Your best stars for each level are saved in this browser.',
     ],
     difficulty: [
-      'The ball starts faster on every level and speeds up slightly each time it touches your paddle within a level.',
-      'Later levels use tougher bricks and steel blocks that change the ball’s path.',
+      'The ball starts faster on every level up to level 8 and speeds up slightly each time it touches your paddle within a level.',
+      'Later levels use tougher bricks and steel blocks that change the ball’s path. Every generated level is checked so that no breakable brick is sealed in by steel.',
+      'Levels 11 and 21 are star-gated: you need 15 stars in total to open level 11 and 30 stars to open level 21. Replay earlier levels to earn more stars.',
       'You start with 3 lives and can hold up to 5. Power-up effects end when you lose the ball.',
     ],
     tips: [
@@ -162,13 +166,16 @@ export const GAME_CONTENT: Record<GameId, GameContent> = {
       },
     ],
     faq: [
-      { q: 'How many levels are there?', a: 'Eight. Clear the last one to win; every remaining life adds bonus points.' },
+      {
+        q: 'How many levels are there, and how do stars work?',
+        a: 'Thirty. Each cleared level earns one to three stars, depending on how many balls you lost on it. You can replay any unlocked level to improve its stars. Clear level 30 to win; every remaining life adds bonus points.',
+      },
       { q: 'Can I play with a mouse?', a: 'Yes. The paddle follows your mouse while it is over the game. Click to launch the ball.' },
       {
         q: 'Why can’t I break the grey bricks?',
         a: 'They are steel. They exist to change the ball’s path, and you do not need to clear them to finish a level.',
       },
-      { q: 'Where is my high score saved?', a: 'Only in this browser on this device. Nothing is uploaded and there are no accounts.' },
+      { q: 'Where are my high score and stars saved?', a: 'Only in this browser on this device, together with your unlocked levels. Nothing is uploaded and there are no accounts. Clearing your browser’s site data removes them.' },
       { q: 'Does the game pause automatically?', a: 'Yes, whenever you switch tabs or move keyboard focus away from the game.' },
     ],
   },

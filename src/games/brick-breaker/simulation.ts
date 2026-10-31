@@ -1,8 +1,9 @@
 import { circleRectContact, clamp, rectsOverlap, reflect, type Rect } from '../engine/collision';
 import { ParticlePool } from '../engine/particles';
-import type { GameOutcome, GameStats, HudItem, InputSnapshot, Simulation, SoundCue } from '../engine/types';
+import type { CounterEvent, GameOutcome, GameStats, HudItem, InputSnapshot, LevelResult, Simulation, SoundCue } from '../engine/types';
 import type { RunOptions } from '../modifiers';
 import { createRng, deriveSeed, pickWeighted, randomRange, type Rng } from '@/lib/utils/random';
+import { LEVELS } from './levels';
 
 export const BB_WIDTH = 540;
 export const BB_HEIGHT = 720;
@@ -38,21 +39,7 @@ export const BRICK_BREAKER_BINDINGS: Readonly<Record<BrickBreakerAction, readonl
   launch: ['Space', 'ArrowUp', 'KeyW'],
 };
 
-export interface LevelDef {
-  name: string;
-  rows: readonly string[];
-}
-
-export const LEVELS: readonly LevelDef[] = [
-  { name: 'Warm-Up', rows: ['1111111111', '1111111111', '1111111111', '1111111111'] },
-  { name: 'Pyramid', rows: ['....22....', '...2112...', '..211112..', '.21111112.', '2111111112'] },
-  { name: 'Stripes', rows: ['2222222222', '1111111111', '..........', '3333333333', '1111111111'] },
-  { name: 'Checkerboard', rows: ['2.2.2.2.2.', '.1.1.1.1.1', '3.3.3.3.3.', '.1.1.1.1.1', '2.2.2.2.2.', '.2.2.2.2.2'] },
-  { name: 'Fortress', rows: ['1111111111', '1#222222#1', '1#2.33.2#1', '1#2.33.2#1', '1#222222#1', '1111111111'] },
-  { name: 'Diamond', rows: ['....33....', '...3223...', '..321123..', '.32111123.', '..321123..', '...3223...', '....33....'] },
-  { name: 'Gates', rows: ['3333333333', '2#2#22#2#2', '1111111111', '1#1#11#1#1', '2222222222'] },
-  { name: 'Finale', rows: ['3333333333', '3#222222#3', '3#2.11.2#3', '3#2.11.2#3', '3#222222#3', '3333333333', '2222222222'] },
-];
+export { LEVELS, type LevelDef } from './levels';
 
 export interface Brick extends Rect {
   hp: number;
@@ -149,6 +136,10 @@ export class BrickBreakerSimulation implements Simulation<BrickBreakerAction> {
 
   private readonly rng: Rng;
   private pointerMode = false;
+  private levelLivesLost = 0;
+  private bestComboRun = 0;
+  private levelResults: LevelResult[] = [];
+  private counters: CounterEvent[] = [];
   private paddleHits = 0;
   private sincePaddle = 0;
   private timer = 0;
@@ -162,7 +153,8 @@ export class BrickBreakerSimulation implements Simulation<BrickBreakerAction> {
     this.lives = options.modifier === 'bonus-life' ? START_LIVES + 1 : START_LIVES;
     this.paddleW = this.basePaddleWidth();
     this.paddleX = (BB_WIDTH - this.paddleW) / 2;
-    this.loadLevel(1);
+    const start = Number.isInteger(options.level) ? Math.min(LEVELS.length, Math.max(1, options.level!)) : 1;
+    this.loadLevel(start);
   }
 
   get levelName(): string {
@@ -203,6 +195,18 @@ export class BrickBreakerSimulation implements Simulation<BrickBreakerAction> {
     return out;
   }
 
+  drainLevelResults(): LevelResult[] {
+    const out = this.levelResults;
+    this.levelResults = [];
+    return out;
+  }
+
+  drainCounters(): CounterEvent[] {
+    const out = this.counters;
+    this.counters = [];
+    return out;
+  }
+
   paddleRect(): Rect {
     return { x: this.paddleX, y: PADDLE_Y, w: this.paddleW, h: PADDLE_H };
   }
@@ -223,6 +227,7 @@ export class BrickBreakerSimulation implements Simulation<BrickBreakerAction> {
     this.capsules = [];
     this.paddleHits = 0;
     this.combo = 0;
+    this.levelLivesLost = 0;
     this.setPhase('serve');
     this.announcements.push(`Level ${level}: ${this.levelName}`);
   }
@@ -438,6 +443,10 @@ export class BrickBreakerSimulation implements Simulation<BrickBreakerAction> {
     this.score += brickPoints(brick.maxHp, this.combo);
     this.combo++;
     this.bricksBroken++;
+    if (this.combo > this.bestComboRun) {
+      this.bestComboRun = this.combo;
+      this.counters.push({ counter: 'brick-breaker:best-combo', value: this.combo, mode: 'max' });
+    }
     this.cues.push('brick');
     const colors = ['#38e8ff', '#a78bfa', '#ff4fd8'];
     this.particles.burst({
@@ -494,6 +503,10 @@ export class BrickBreakerSimulation implements Simulation<BrickBreakerAction> {
   private clearLevel(): void {
     this.score += 100 * this.level;
     this.capsules = [];
+    this.levelResults.push({ level: this.level, value: this.levelLivesLost });
+    this.counters.push({ counter: 'brick-breaker:levels-cleared', value: 1, mode: 'add' });
+    this.counters.push({ counter: 'brick-breaker:highest-level', value: this.level, mode: 'max' });
+    if (this.levelLivesLost === 0) this.counters.push({ counter: 'brick-breaker:flawless-levels', value: 1, mode: 'add' });
     if (this.level >= LEVELS.length) {
       this.won = true;
       this.score += this.lives * 250;
@@ -513,6 +526,7 @@ export class BrickBreakerSimulation implements Simulation<BrickBreakerAction> {
   private loseLife(): void {
     this.lives -= 1;
     this.livesLost += 1;
+    this.levelLivesLost += 1;
     this.combo = 0;
     this.capsules = [];
     this.wideTimer = 0;

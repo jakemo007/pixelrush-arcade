@@ -3,7 +3,7 @@ import { SoundBoard } from './audio';
 import { InputManager } from './input';
 import { createFixedStepLoop } from './loop';
 import { transition, type GameStatus, type StatusEvent } from './status';
-import type { AnyGameDefinition, GameOutcome, GameStats, HudItem, Simulation } from './types';
+import type { AnyGameDefinition, CounterEvent, GameOutcome, GameStats, HudItem, LevelResult, Simulation } from './types';
 
 export interface HudState {
   score: number;
@@ -23,6 +23,8 @@ export interface ControllerCallbacks {
   onGameOver(result: RunResult): void;
   onAnnounce(message: string): void;
   onError(error: unknown): void;
+  onLevelResult?(result: LevelResult): void;
+  onCounter?(event: CounterEvent): void;
 }
 
 export interface MountOptions {
@@ -40,6 +42,8 @@ export interface GameController {
   pause(): void;
   resume(): void;
   restart(): void;
+  refresh(): void;
+  showMenu(): void;
   setMuted(muted: boolean): void;
   destroy(): void;
 }
@@ -111,6 +115,8 @@ export function mountGame(def: AnyGameDefinition, options: MountOptions): GameCo
     sim.update(dt, input.snapshot());
     for (const cue of sim.drainCues()) sound.play(cue);
     for (const message of sim.drainAnnouncements()) callbacks.onAnnounce(message);
+    if (sim.drainLevelResults) for (const r of sim.drainLevelResults()) callbacks.onLevelResult?.(r);
+    if (sim.drainCounters) for (const e of sim.drainCounters()) callbacks.onCounter?.(e);
     emitHud(false);
     if (sim.outcome) finish(sim.outcome);
   }
@@ -170,6 +176,26 @@ export function mountGame(def: AnyGameDefinition, options: MountOptions): GameCo
     emitHud(true);
     draw();
     loop.start();
+  }
+
+  function rebuild(): void {
+    sim = def.createSimulation(options.getRunOptions());
+    lastHudKey = '';
+    emitHud(true);
+    draw();
+  }
+
+  function refresh(): void {
+    if (status !== 'ready') return;
+    rebuild();
+  }
+
+  function showMenu(): void {
+    if (!transition(status, 'menu')) return;
+    loop.stop();
+    input.releaseAll();
+    apply('menu');
+    rebuild();
   }
 
   function ownsKeyEvent(target: EventTarget | null, allowBody: boolean): boolean {
@@ -307,6 +333,8 @@ export function mountGame(def: AnyGameDefinition, options: MountOptions): GameCo
     pause,
     resume,
     restart,
+    refresh,
+    showMenu,
     setMuted(muted: boolean) {
       sound.setMuted(muted);
     },

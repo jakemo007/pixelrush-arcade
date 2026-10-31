@@ -61,6 +61,17 @@ export type SoundCue =
 
 export type GameOutcome = 'lost' | 'won';
 
+export interface LevelResult {
+  level: number;
+  value: number;
+}
+
+export interface CounterEvent {
+  counter: string;
+  value: number;
+  mode: 'add' | 'max';
+}
+
 export interface Simulation<A extends string> {
   update(dt: number, input: InputSnapshot<A>): void;
   readonly outcome: GameOutcome | null;
@@ -69,6 +80,8 @@ export interface Simulation<A extends string> {
   getHud(): readonly HudItem[];
   drainCues(): SoundCue[];
   drainAnnouncements(): string[];
+  drainLevelResults?(): LevelResult[];
+  drainCounters?(): CounterEvent[];
 }
 
 export interface RenderEnv {

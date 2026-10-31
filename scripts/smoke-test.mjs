@@ -370,7 +370,7 @@ console.log('\nBrick Breaker (mouse + keyboard)');
   await page.goto(`${BASE}/games/brick-breaker/`, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Start game' }).click();
   await waitForStatus(page, 'playing');
-  check((await hudValue(page, 'Lives')) === '3' && (await hudValue(page, 'Level')) === '1/8', 'starts with 3 lives on level 1/8');
+  check((await hudValue(page, 'Lives')) === '3' && (await hudValue(page, 'Level')) === '1/30', 'starts with 3 lives on level 1/30');
   const box = await page.locator('canvas').boundingBox();
   await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.8);
   await page.keyboard.press('Space');
@@ -394,6 +394,46 @@ console.log('\nBrick Breaker (mouse + keyboard)');
     { timeout: 45000 },
   );
   check(true, 'losing the ball costs a life');
+  check(errors.length === 0, `no console errors${errors.length ? `: ${errors.join(' | ')}` : ''}`);
+  await context.close();
+}
+
+console.log('\nBrick Breaker level select, stars and saved progress');
+{
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  const errors = watch(page, 'brick-breaker-levels');
+  await page.goto(`${BASE}/games/brick-breaker/`, { waitUntil: 'networkidle' });
+  const grid = page.getByRole('group', { name: 'Choose a level' });
+  await grid.waitFor();
+  check((await grid.getByRole('button').count()) === 30, 'the start screen lists 30 levels');
+  check(await grid.getByRole('button', { name: /^Level 2, locked\. Clear level 1 first\./ }).isVisible(), 'level 2 is locked until level 1 is cleared');
+  check((await grid.getByRole('button', { name: 'Level 1, not cleared yet' }).getAttribute('aria-pressed')) === 'true', 'level 1 is selected by default');
+  await grid.getByRole('button', { name: /^Level 2, locked/ }).click({ force: true });
+  check((await grid.getByRole('button', { name: 'Level 1, not cleared yet' }).getAttribute('aria-pressed')) === 'true', 'clicking a locked level does not select it');
+
+  await page.evaluate(() =>
+    localStorage.setItem('pixelrush:v1:game:brick-breaker:progress', JSON.stringify({ levels: { 1: { stars: 3, best: 0, at: 'x' }, 2: { stars: 1, best: 2, at: 'x' } } })),
+  );
+  await page.reload({ waitUntil: 'networkidle' });
+  const saved = page.getByRole('group', { name: 'Choose a level' });
+  await saved.waitFor();
+  check(await saved.getByRole('button', { name: 'Level 1, 3 of 3 stars' }).isVisible(), 'saved stars are shown after a reload');
+  check((await saved.getByRole('button', { name: 'Level 3, not cleared yet' }).getAttribute('aria-pressed')) === 'true', 'the next level to play is preselected');
+  await saved.getByRole('button', { name: 'Level 2, 1 of 3 stars' }).click();
+  await page.getByRole('button', { name: 'Start game' }).click();
+  await waitForStatus(page, 'playing');
+  check((await hudValue(page, 'Level')) === '2/30', 'starting from level 2 shows 2/30 in the HUD');
+  await page.keyboard.press('KeyP');
+  await waitForStatus(page, 'paused');
+  await page.getByRole('button', { name: 'Choose level' }).click();
+  await waitForStatus(page, 'ready');
+  check(await page.getByRole('group', { name: 'Choose a level' }).isVisible(), 'Choose level from the pause menu returns to the level select');
+  await page.getByRole('group', { name: 'Choose a level' }).getByRole('button', { name: 'Level 1, 3 of 3 stars' }).click();
+  await page.getByRole('button', { name: 'Start game' }).click();
+  await waitForStatus(page, 'playing');
+  check((await hudValue(page, 'Level')) === '1/30', 'a different level can be chosen and started');
+  await page.screenshot({ path: `${OUT_DIR}/brick-breaker-level-select.png` });
   check(errors.length === 0, `no console errors${errors.length ? `: ${errors.join(' | ')}` : ''}`);
   await context.close();
 }
@@ -502,7 +542,6 @@ console.log('\nDrop Four (vs computer, keyboard, take back, two players)');
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
   const errors = watch(page, 'drop-four');
-  const moves = async () => toNumber(await hudValue(page, 'Moves'));
   const waitForMoves = (n) =>
     page.waitForFunction(
       (target) => {
