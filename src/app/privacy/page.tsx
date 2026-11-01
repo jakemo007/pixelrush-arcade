@@ -9,6 +9,7 @@ import { DAILY_HISTORY_LIMIT, DAILY_PROGRESS_KEY } from '@/lib/storage/daily-pro
 import { personalBestKey } from '@/lib/storage/high-scores';
 import { SETTINGS_KEY } from '@/lib/storage/settings';
 import { pageMetadata } from '@/lib/seo/metadata';
+import { ACHIEVEMENTS_STORAGE_KEY } from '@/lib/progress/definitions';
 
 export const metadata = pageMetadata({
   title: 'Privacy Policy',
@@ -108,6 +109,13 @@ export default function PrivacyPage() {
                 </td>
                 <td>Your best daily-challenge score and whether you completed it, for the last {DAILY_HISTORY_LIMIT} days</td>
                 <td>To show daily challenge progress</td>
+              </tr>
+              <tr>
+                <td>
+                  <code>{ACHIEVEMENTS_STORAGE_KEY}</code>
+                </td>
+                <td>Brick Breaker achievements earned, including their unlocked status and progress</td>
+                <td>To remember achievement progress in this browser</td>
               </tr>
               <tr>
                 <td>
