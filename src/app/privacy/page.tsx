@@ -9,7 +9,8 @@ import { DAILY_HISTORY_LIMIT, DAILY_PROGRESS_KEY } from '@/lib/storage/daily-pro
 import { personalBestKey } from '@/lib/storage/high-scores';
 import { SETTINGS_KEY } from '@/lib/storage/settings';
 import { pageMetadata } from '@/lib/seo/metadata';
-import { ACHIEVEMENTS_STORAGE_KEY } from '@/lib/progress/definitions';
+import { ACHIEVEMENTS_KEY } from '@/lib/progress/achievements';
+import { storageKey } from '@/lib/storage/safe-storage';
 
 export const metadata = pageMetadata({
   title: 'Privacy Policy',
@@ -21,6 +22,7 @@ export default function PrivacyPage() {
   const operator = siteConfig.operatorName || 'the operator of this website';
   const bestKeyExample = personalBestKey(GAME_IDS[0]).replace(GAME_IDS[0], '<game>');
   const gameDataExample = gameDataKey(GAME_IDS[0], 'prefs').replace(GAME_IDS[0], '<game>').replace(/prefs$/, '<name>');
+  const achievementsStorageKey = storageKey(ACHIEVEMENTS_KEY);
 
   return (
     <div className="container">
@@ -112,7 +114,7 @@ export default function PrivacyPage() {
               </tr>
               <tr>
                 <td>
-                  <code>{ACHIEVEMENTS_STORAGE_KEY}</code>
+                  <code>{achievementsStorageKey}</code>
                 </td>
                 <td>Brick Breaker achievements earned, including their unlocked status and progress</td>
                 <td>To remember achievement progress in this browser</td>
