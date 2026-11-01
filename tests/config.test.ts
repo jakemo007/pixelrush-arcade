@@ -10,6 +10,7 @@ describe('advertising configuration', () => {
   it('is disabled with no configuration', () => {
     const ads = resolveAdsConfig({});
     expect(ads.enabled).toBe(false);
+    expect(ads.publisherId).toBeNull();
     expect(ads.clientId).toBeNull();
     expect(ads.slots).toEqual({ 'game-page': null, 'content-page': null });
   });
@@ -30,7 +31,23 @@ describe('advertising configuration', () => {
     for (const id of ['', 'pub-1234567890123456', 'ca-pub-123', 'ca-pub-XXXXXXXXXXXXXXXX']) {
       const ads = resolveAdsConfig({ NEXT_PUBLIC_ADS_ENABLED: 'true', NEXT_PUBLIC_ADSENSE_CLIENT_ID: id });
       expect(ads.enabled).toBe(false);
+      expect(ads.publisherId).toBeNull();
       expect(ads.problems.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('keeps a valid publisher ID for the AdSense loader while ads stay disabled', () => {
+    for (const flag of [undefined, '', 'false']) {
+      const ads = resolveAdsConfig({
+        NEXT_PUBLIC_ADS_ENABLED: flag,
+        NEXT_PUBLIC_ADSENSE_CLIENT_ID: ` ${VALID_CLIENT} `,
+        NEXT_PUBLIC_ADSENSE_SLOT_GAME_PAGE: '1234567890',
+        NEXT_PUBLIC_ADSENSE_SLOT_CONTENT_PAGE: '1234567890',
+      });
+      expect(ads.publisherId).toBe(VALID_CLIENT);
+      expect(ads.enabled).toBe(false);
+      expect(ads.clientId).toBeNull();
+      expect(ads.slots).toEqual({ 'game-page': null, 'content-page': null });
     }
   });
 
