@@ -1,11 +1,14 @@
+import Script from 'next/script';
 import { adsConfig } from '@/config/integrations';
 
 export function AdSenseScript() {
-  if (!adsConfig.enabled || !adsConfig.clientId) return null;
+  if (!adsConfig.publisherId) return null;
   return (
-    <script
+    // eslint-disable-next-line @next/next/no-before-interactive-script-outside-document
+    <Script
       async
-      src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsConfig.clientId}`}
+      src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsConfig.publisherId}`}
+      strategy="beforeInteractive"
       crossOrigin="anonymous"
     />
   );

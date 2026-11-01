@@ -102,7 +102,7 @@ Logical size **540 × 720**. 10 columns of 50 × 20 px bricks with 4 px gaps, al
 | Ball | radius 7 px; speed 380 px/s + 32 per level (cap 600), +4 per paddle hit within a level (cap +90) |
 | Bounce angle | hit offset × 60° from vertical (center = straight up) |
 | Lives | 3 (4 with Bonus Life), maximum 5 |
-| Levels | 8 hand-built layouts: Warm-Up, Pyramid, Stripes, Checkerboard, Fortress, Diamond, Gates, Finale |
+| Levels | 30: 8 hand-built layouts (Warm-Up, Pyramid, Stripes, Checkerboard, Fortress, Diamond, Gates, Finale) followed by 22 generated layouts (see "Levels and stars" below) |
 
 **Controls:** `←`/`→` or `A`/`D`, the mouse over the game, or drag anywhere on touch screens. `Space`/`↑`/`W`, click or tap launches.
 
@@ -127,6 +127,16 @@ Logical size **540 × 720**. 10 columns of 50 × 20 px bricks with 4 px gaps, al
 - The ball returns to the paddle at every serve and level change.
 
 **Stats:** `score`, `bricksBroken`, `levelReached`, `livesLost`.
+
+**Levels and stars** (`src/games/brick-breaker/levels.ts`, shell integration in `GameShell`, rules in `src/lib/progress/`, see `docs/PROGRESSION.md`):
+
+- **Level select.** The start screen lists all 30 levels. A run starts at the chosen level (`RunOptions.level`) and continues upwards as before: lives carry over, and clearing level 30 wins. The next level to play is preselected. "Choose level" on the pause and result screens returns to the start screen. Daily Challenge runs always start at level 1 and have no level select.
+- **Generated levels (9 to 30).** Deterministic: level `n` is built from a seeded generator, so every player gets the same layout. Layouts are left-right symmetric, 5 to 10 rows, with density rising from 62% to 82%, steel bricks from 3% to 13% (never in the first or last row) and a hit-point mix that shifts from mostly 1-hit to mostly 3-hit bricks. Up to 40 attempts are made per level, and a safe fallback layout is used if none passes the check below.
+- **Fairness check (`levelProblems`).** At least 12 breakable bricks, at most 12 rows, 10 columns, only `. # 1 2 3`, and every breakable brick must be reachable: flood-fill from above and below through every non-steel cell, treating the side walls as closed. A brick sealed in by steel fails the check. All 30 levels pass in `tests/games/brick-breaker-levels.test.ts`.
+- **Stars.** Per level, by balls lost on that level: 0 lost = 3 stars, 1 = 2 stars, more = 1 star (`levels.thresholds = [2, 1, 0]`, lower is better). A level result is only recorded when the level is cleared. Stars never go down on a replay.
+- **Star gate.** Level 11 needs 15 stars in total and level 21 needs 30 stars (`gate: { every: 10, starsPerGate: 15 }`). The locked level's tooltip and accessible name state exactly what is missing.
+- **Speed.** Ball speed still rises per level up to level 8 (600 px/s cap); the difficulty of later levels comes from layouts.
+- **Achievement counters** emitted by the simulation: `brick-breaker:levels-cleared` (add 1 per clear), `brick-breaker:flawless-levels` (add 1 when no ball was lost on the level), `brick-breaker:highest-level` (max), `brick-breaker:best-combo` (max). Definitions are in `src/lib/progress/definitions.ts`.
 
 ---
 

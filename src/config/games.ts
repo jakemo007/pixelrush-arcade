@@ -1,3 +1,4 @@
+import type { GateRule, StarDirection, StarThresholds } from '@/lib/progress/levels';
 import { meta as solitaire } from '@/games/solitaire/meta';
 import { meta as sudoku } from '@/games/sudoku/meta';
 import { meta as snake } from '@/games/snake/meta';
@@ -111,9 +112,18 @@ interface BaseGameInfo {
   featured?: boolean;
 }
 
+export interface LevelsConfig {
+  count: number;
+  direction: StarDirection;
+  thresholds: StarThresholds;
+  valueLabel: string;
+  gate?: GateRule;
+}
+
 export interface CanvasGameInfo extends BaseGameInfo {
   engine: 'canvas';
   canvas: { width: number; height: number };
+  levels?: LevelsConfig;
 }
 
 export interface DomGameInfo extends BaseGameInfo {
@@ -154,12 +164,12 @@ export const GAMES: readonly GameInfo[] = [
   {
     id: 'brick-breaker',
     name: 'Brick Breaker',
-    tagline: 'Aim every bounce. Clear all eight walls.',
+    tagline: 'Aim every bounce. Clear all thirty walls.',
     summary:
-      'A classic paddle-and-ball game with eight hand-built levels. Angle your shots, chain combos for bonus points and catch power-ups before they fall.',
+      'A classic paddle-and-ball game with 30 levels. Earn up to three stars on each, angle your shots, chain combos for bonus points and catch power-ups before they fall.',
     genre: 'Paddle arcade',
     categories: ['arcade'],
-    tags: ['Classic', 'Aim & angles', '8 levels'],
+    tags: ['Classic', 'Aim & angles', '30 levels'],
     sessionLength: '5 to 15 minutes',
     controls: {
       keyboard: 'Left/Right Arrows or A/D to move, Space to launch',
@@ -169,6 +179,13 @@ export const GAMES: readonly GameInfo[] = [
     engine: 'canvas',
     canvas: { width: 540, height: 720 },
     best: POINTS_BEST,
+    levels: {
+      count: 30,
+      direction: 'lower',
+      thresholds: [2, 1, 0],
+      valueLabel: 'balls lost',
+      gate: { every: 10, starsPerGate: 15 },
+    },
     guideSlug: 'how-to-get-better-at-brick-breaker',
     added: '2026-10-24',
   },

@@ -125,15 +125,20 @@ export function recordLevelResult(
   return { progress: { levels: { ...progress.levels, [String(level)]: record } }, stars: record.stars, improved: true, firstClear: false };
 }
 
-export function isLevelUnlocked(progress: GameProgress, level: number, totalLevels: number, gate?: GateRule): boolean {
-  if (!isValidLevel(level) || level > totalLevels) return false;
-  if (level === 1) return true;
-  if (!levelRecord(progress, level - 1)) return false;
+export function levelLockReason(progress: GameProgress, level: number, totalLevels: number, gate?: GateRule): string | null {
+  if (!isValidLevel(level) || level > totalLevels) return 'Not available';
+  if (level === 1) return null;
+  if (!levelRecord(progress, level - 1)) return `Clear level ${level - 1} first`;
   if (gate && gate.every > 0 && (level - 1) % gate.every === 0) {
-    const gatesPassed = (level - 1) / gate.every;
-    if (totalStars(progress) < gatesPassed * gate.starsPerGate) return false;
+    const needed = ((level - 1) / gate.every) * gate.starsPerGate;
+    const have = totalStars(progress);
+    if (have < needed) return `Needs ${needed} stars (you have ${have})`;
   }
-  return true;
+  return null;
+}
+
+export function isLevelUnlocked(progress: GameProgress, level: number, totalLevels: number, gate?: GateRule): boolean {
+  return levelLockReason(progress, level, totalLevels, gate) === null;
 }
 
 export function highestUnlockedLevel(progress: GameProgress, totalLevels: number, gate?: GateRule): number {

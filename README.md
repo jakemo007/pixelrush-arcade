@@ -174,7 +174,7 @@ Google consent mode defaults are set **before** the tag loads, using `NEXT_PUBLI
 
 ## Advertising (disabled by default)
 
-Ads load **only** when `NEXT_PUBLIC_ADS_ENABLED=true` **and** `NEXT_PUBLIC_ADSENSE_CLIENT_ID` is a valid `ca-pub-` ID. Each placement also needs an approved ad-unit ID (`NEXT_PUBLIC_ADSENSE_SLOT_GAME_PAGE`, `NEXT_PUBLIC_ADSENSE_SLOT_CONTENT_PAGE`). Otherwise nothing renders: no script, no empty boxes. The only placements are below the game-page content and below guide articles, never near the game canvas or controls.
+Ads load **only** when `NEXT_PUBLIC_ADS_ENABLED=true` **and** `NEXT_PUBLIC_ADSENSE_CLIENT_ID` is a valid `ca-pub-` ID. Each placement also needs an approved ad-unit ID (`NEXT_PUBLIC_ADSENSE_SLOT_GAME_PAGE`, `NEXT_PUBLIC_ADSENSE_SLOT_CONTENT_PAGE`). Otherwise no ad boxes render. A valid `NEXT_PUBLIC_ADSENSE_CLIENT_ID` on its own adds only Google's AdSense loader script to every page, which AdSense uses to verify site ownership. That script renders no ad units, but Google can still show Auto ads through it if they are switched on for the site in AdSense. With no client ID, nothing renders: no script, no empty boxes. The only placements are below the game-page content and below guide articles, never near the game canvas or controls.
 
 H5 Games Ads (interstitial and rewarded ads inside games) are **not implemented**. They require a separate Google approval and Google's official Ad Placement API. See [docs/MONETIZATION.md](docs/MONETIZATION.md) for requirements, policies and where an approved integration would go.
 

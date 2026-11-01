@@ -51,7 +51,7 @@ NEXT_PUBLIC_ADSENSE_SLOT_GAME_PAGE=1234567890           # an ad unit you created
 NEXT_PUBLIC_ADSENSE_SLOT_CONTENT_PAGE=1234567890
 ```
 
-`src/config/integrations.ts` enables ads **only** if the flag is exactly `true` **and** the client ID matches `ca-pub-` plus 16 digits. A placement renders only if its slot ID is numeric. Anything else means no script and no ad container. In Vercel, set these for the **Production** environment only, so preview deployments stay ad-free.
+`src/config/integrations.ts` enables ads **only** if the flag is exactly `true` **and** the client ID matches `ca-pub-` plus 16 digits. A placement renders only if its slot ID is numeric. Anything else means no ad container. A valid client ID on its own still loads Google's AdSense loader script on every page (`AdSenseScript`), because AdSense uses it to verify site ownership. That script renders no ad units, but Google can show Auto ads through it if they are switched on for the site in AdSense, so keep Auto ads off until you are ready. With no valid client ID there is no script at all. In Vercel, set these for the **Production** environment only, so preview deployments stay ad-free.
 
 `.env.example` documents the variables with empty values, and `.env.local` is git-ignored.
 

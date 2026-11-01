@@ -166,6 +166,16 @@
   cursor: none;
 }
 
+.achievement {
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--color-yellow) 50%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-yellow) 12%, transparent);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .overlay {
   position: absolute;
   inset: 0;
@@ -179,6 +189,11 @@
   background: rgba(6, 8, 26, 0.78);
   text-align: center;
   animation: fade-in 180ms var(--ease) both;
+}
+
+.overlayLevels {
+  justify-content: flex-start;
+  background: rgba(6, 8, 26, 0.94);
 }
 
 .overlayResult .bigButton {

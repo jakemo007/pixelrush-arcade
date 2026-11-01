@@ -2,6 +2,7 @@ export type AdPlacement = 'game-page' | 'content-page';
 
 export interface AdsConfig {
   enabled: boolean;
+  publisherId: string | null;
   clientId: string | null;
   slots: Record<AdPlacement, string | null>;
   problems: string[];
@@ -34,13 +35,13 @@ export function resolveAdsConfig(env: IntegrationEnv): AdsConfig {
   const problems: string[] = [];
   const flag = clean(env.NEXT_PUBLIC_ADS_ENABLED).toLowerCase();
   const rawClient = clean(env.NEXT_PUBLIC_ADSENSE_CLIENT_ID);
-  const clientId = ADSENSE_CLIENT_PATTERN.test(rawClient) ? rawClient : null;
+  const publisherId = ADSENSE_CLIENT_PATTERN.test(rawClient) ? rawClient : null;
 
   if (flag !== 'true') problems.push('NEXT_PUBLIC_ADS_ENABLED is not "true".');
   if (!rawClient) problems.push('NEXT_PUBLIC_ADSENSE_CLIENT_ID is empty.');
-  else if (!clientId) problems.push('NEXT_PUBLIC_ADSENSE_CLIENT_ID is not a valid ca-pub-XXXXXXXXXXXXXXXX ID.');
+  else if (!publisherId) problems.push('NEXT_PUBLIC_ADSENSE_CLIENT_ID is not a valid ca-pub-XXXXXXXXXXXXXXXX ID.');
 
-  const enabled = flag === 'true' && clientId !== null;
+  const enabled = flag === 'true' && publisherId !== null;
 
   const slot = (value: string | undefined): string | null => {
     const v = clean(value);
@@ -49,7 +50,8 @@ export function resolveAdsConfig(env: IntegrationEnv): AdsConfig {
 
   return {
     enabled,
-    clientId: enabled ? clientId : null,
+    publisherId,
+    clientId: enabled ? publisherId : null,
     slots: {
       'game-page': slot(env.NEXT_PUBLIC_ADSENSE_SLOT_GAME_PAGE),
       'content-page': slot(env.NEXT_PUBLIC_ADSENSE_SLOT_CONTENT_PAGE),
